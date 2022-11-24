@@ -106,7 +106,7 @@ typedef enum
  #if ( TH_ASSERT_EN )
 	#define TH_ASSERT(x)                    { PROJECT_CONFIG_ASSERT(x) }
  #else
-  #define TH_ASSERT)                        { ; }
+  #define TH_ASSERT(x)                        { ; }
  #endif
 
 ////////////////////////////////////////////////////////////////////////////////
