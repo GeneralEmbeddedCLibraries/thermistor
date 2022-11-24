@@ -36,11 +36,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * 	Thermistor handler frequency
+ *      Thermistor handler frequency
  *
  * 	Unit: Hz
  */
 #define TH_HNDL_FREQ_HZ					( 1.0f / TH_HNDL_PERIOD_S )
+
+/**
+ *  Factor for NTC calculation when given nominal NTC value at 25 degC
+ */
+#define TH_NTC_25DEG_FACTOR             ((float32_t) ( 1.0 / 298.15 ))      // Leave double
 
 /**
  *  Thermistor data
@@ -245,7 +250,7 @@ static float32_t th_calc_resistance(const th_opt_t th)
 *
 * @param[in]    rth 			- Resistance of NTC thermistor
 * @param[in]    beta 			- Beta factor of NTC
-* @param[in]    rth_nom         - Nominal value of NTC, typ. @25 degC
+* @param[in]    rth_nom         - Nominal value of NTC @25 degC
 * @return       temp 			- Calculated temperature
 */
 ////////////////////////////////////////////////////////////////////////////////
@@ -256,7 +261,7 @@ static float32_t th_calc_ntc_temperature(const float32_t rth, const float32_t be
     TH_ASSERT( rth_nom > 0.0f );
 
     // Calculate temperature
-    temp = (float32_t) (( 1.0f / (( 1.0f / 298.15f ) + (( 1.0f / beta ) * log( rth / rth_nom )))) - 273.15f );
+    temp = (float32_t) (( 1.0f / ( TH_NTC_25DEG_FACTOR + (( 1.0f / beta ) * log( rth / rth_nom )))) - 273.15f );
 
     return temp;
 }
@@ -274,13 +279,13 @@ static float32_t th_calc_temperature(const th_opt_t th)
     float32_t temp = 0.0f;
 
     // Calculate thermistor resistance
-    const float32_t rth = th_calc_resistance( th );
+    g_th_data[th].res = th_calc_resistance( th );
 
     // Sensor type
     switch( gp_cfg_table[th].type )
     {
         case eTH_TYPE_NTC:
-            temp = th_calc_ntc_temperature( th, gp_cfg_table[th].sensor.ntc.beta, gp_cfg_table[th].sensor.ntc.nom_val );
+            temp = th_calc_ntc_temperature( g_th_data[th].res, gp_cfg_table[th].sensor.ntc.beta, gp_cfg_table[th].sensor.ntc.nom_val );
             break;
 
         case eTH_TYPE_PT1000:
@@ -446,18 +451,26 @@ th_status_t th_hndl(void)
 	return status;
 }
 
-
-
-
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Get temperature in deg C
+*
+* @param[in]    th      - Thermistor option
+* @param[out]   p_temp  - Pointer to temperature
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
 th_status_t th_get_degC(const th_opt_t th, float32_t * const p_temp)
 {
 	th_status_t status = eTH_OK;
 
 	TH_ASSERT( true == gb_is_init );
 	TH_ASSERT( NULL != p_temp );
+    TH_ASSERT( th < eTH_NUM_OF );
 
-	if	(	( true == gb_is_init )
-		&&	( NULL != p_temp ))
+    if	(	( true == gb_is_init )
+        &&	( NULL != p_temp )
+        &&  ( th < eTH_NUM_OF ))
 	{
 		*p_temp = g_th_data[th].temp;
 	}
@@ -469,16 +482,26 @@ th_status_t th_get_degC(const th_opt_t th, float32_t * const p_temp)
 	return status;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Get temperature in deg F
+*
+* @param[in]    th      - Thermistor option
+* @param[out]   p_temp  - Pointer to temperature
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
 th_status_t th_get_degF(const th_opt_t th, float32_t * const p_temp)
 {
 	th_status_t status = eTH_OK;
 
 	TH_ASSERT( true == gb_is_init );
 	TH_ASSERT( NULL != p_temp );
+    TH_ASSERT( th < eTH_NUM_OF );
 
-	if	(	( true == gb_is_init )
-		&&	( NULL != p_temp ))
+    if	(	( true == gb_is_init )
+        &&	( NULL != p_temp )
+        &&  ( th < eTH_NUM_OF ))
 	{
         // TODO: Convert ...
 		*p_temp = g_th_data[th].temp;
@@ -491,16 +514,26 @@ th_status_t th_get_degF(const th_opt_t th, float32_t * const p_temp)
 	return status;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Get temperature in kelvins
+*
+* @param[in]    th      - Thermistor option
+* @param[out]   p_temp  - Pointer to temperature
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
 th_status_t th_get_kelvin(const th_opt_t th, float32_t * const p_temp)
 {
 	th_status_t status = eTH_OK;
 
 	TH_ASSERT( true == gb_is_init );
 	TH_ASSERT( NULL != p_temp );
+    TH_ASSERT( th < eTH_NUM_OF );
 
-	if	(	( true == gb_is_init )
-		&&	( NULL != p_temp ))
+    if	(	( true == gb_is_init )
+        &&	( NULL != p_temp )
+        &&  ( th < eTH_NUM_OF ))
 	{
         // TODO: Convert...
 		*p_temp = g_th_data[th].temp;
@@ -513,17 +546,28 @@ th_status_t th_get_kelvin(const th_opt_t th, float32_t * const p_temp)
 	return status;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Get resistance of thermistor in Ohms
+*
+* @param[in]    th      - Thermistor option
+* @param[out]   p_res   - Pointer to resistance
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
 th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
 {
 	th_status_t status = eTH_OK;
 
 	TH_ASSERT( true == gb_is_init );
 	TH_ASSERT( NULL != p_res );
+    TH_ASSERT( th < eTH_NUM_OF );
 
-	if	(	( true == gb_is_init )
-		&&	( NULL != p_res ))
+    if	(	( true == gb_is_init )
+        &&	( NULL != p_res )
+        &&  ( th < eTH_NUM_OF ))
 	{
-		// TODO: ...
+        *p_res = g_th_data[th].res;
 	}
 	else
 	{
@@ -533,19 +577,28 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
 	return status;
 }
 
-
 #if ( 1 == THERMISTOR_FILTER_EN )
 
-
+    ////////////////////////////////////////////////////////////////////////////////
+    /*!
+    * @brief        Get filtered temperature in deg C
+    *
+    * @param[in]    th      - Thermistor option
+    * @param[out]   p_temp  - Pointer to temperature
+    * @return       status  - Status of operation
+    */
+    ////////////////////////////////////////////////////////////////////////////////
     th_status_t th_get_degC_filt(const th_opt_t th, float32_t * const p_temp)
     {
     	th_status_t status = eTH_OK;
 
     	TH_ASSERT( true == gb_is_init );
     	TH_ASSERT( NULL != p_temp );
+    	TH_ASSERT( th < eTH_NUM_OF );
 
     	if	(	( true == gb_is_init )
-    		&&	( NULL != p_temp ))
+    		&&	( NULL != p_temp )
+            &&  ( th < eTH_NUM_OF ))
     	{
     		*p_temp = g_th_data[th].temp_filt;
     	}
@@ -557,16 +610,26 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
     	return status;
     }
 
-
+    ////////////////////////////////////////////////////////////////////////////////
+    /*!
+    * @brief        Get filtered temperature in deg F
+    *
+    * @param[in]    th      - Thermistor option
+    * @param[out]   p_temp  - Pointer to temperature
+    * @return       status  - Status of operation
+    */
+    ////////////////////////////////////////////////////////////////////////////////
     th_status_t th_get_degF_filt(const th_opt_t th, float32_t * const p_temp)
     {
     	th_status_t status = eTH_OK;
 
     	TH_ASSERT( true == gb_is_init );
     	TH_ASSERT( NULL != p_temp );
+    	TH_ASSERT( th < eTH_NUM_OF );
 
     	if	(	( true == gb_is_init )
-    		&&	( NULL != p_temp ))
+    		&&	( NULL != p_temp )
+            &&  ( th < eTH_NUM_OF ))
     	{
             // TODO: Convert...
     		*p_temp = g_th_data[th].temp_filt;
@@ -579,16 +642,26 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
     	return status;
     }
 
-
+    ////////////////////////////////////////////////////////////////////////////////
+    /*!
+    * @brief        Get filtered temperature in kelvin
+    *
+    * @param[in]    th      - Thermistor option
+    * @param[out]   p_temp  - Pointer to temperature
+    * @return       status  - Status of operation
+    */
+    ////////////////////////////////////////////////////////////////////////////////
     th_status_t th_get_kelvin_filt(const th_opt_t th, float32_t * const p_temp)
     {
     	th_status_t status = eTH_OK;
 
     	TH_ASSERT( true == gb_is_init );
     	TH_ASSERT( NULL != p_temp );
+    	TH_ASSERT( th < eTH_NUM_OF );
 
     	if	(	( true == gb_is_init )
-    		&&	( NULL != p_temp ))
+    		&&	( NULL != p_temp )
+            &&  ( th < eTH_NUM_OF ))
     	{
             // TODO: Convert...
     		*p_temp = g_th_data[th].temp_filt;
@@ -601,16 +674,31 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
     	return status;
     }
 
-
+    ////////////////////////////////////////////////////////////////////////////////
+    /*!
+    * @brief        Set LPF cuttoff frequency
+    *
+    * @param[in]    th      - Thermistor option
+    * @param[in]    fc      - Cutoff frequency of LPF
+    * @return       status  - Status of operation
+    */
+    ////////////////////////////////////////////////////////////////////////////////
     th_status_t th_set_lpf_fc(const th_opt_t th, const float32_t fc)
     {
     	th_status_t status = eTH_OK;
 
     	TH_ASSERT( true == gb_is_init );
+        TH_ASSERT( th < eTH_NUM_OF );
+        TH_ASSERT( fc > 0.0f );
 
-    	if ( true == gb_is_init )
+    	if  (   ( true == gb_is_init )
+            &&  ( th < eTH_NUM_OF )
+            &&  ( fc > 0.0f ))
     	{
-
+            if ( eFILTER_OK != filter_rc_change_cutoff( g_th_data[th].lpf, fc, TH_HNDL_FREQ_HZ ))
+            {
+                status = eTH_ERROR;
+            }
     	}
     	else
     	{
@@ -620,16 +708,28 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
     	return status;
     }
 
-
+    ////////////////////////////////////////////////////////////////////////////////
+    /*!
+    * @brief        Get LPF cuttoff frequency
+    *
+    * @param[in]    th      - Thermistor option
+    * @param[out]   p_fc    - Pointer to LPF cutoff frequency
+    * @return       status  - Status of operation
+    */
+    ////////////////////////////////////////////////////////////////////////////////
     th_status_t th_get_lpf_fc(const th_opt_t th, float32_t * const p_fc)
     {
     	th_status_t status = eTH_OK;
 
     	TH_ASSERT( true == gb_is_init );
+    	TH_ASSERT( NULL != p_fc );
+        TH_ASSERT( th < eTH_NUM_OF );
 
-    	if ( true == gb_is_init )
+    	if  (   ( true == gb_is_init )
+            &&  ( NULL != p_fc )
+            &&  ( th < eTH_NUM_OF ))
     	{
-
+            *p_fc = filter_rc_get_cutoff( g_th_data[th].lpf );
     	}
     	else
     	{
@@ -640,7 +740,6 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
     }
 
 #endif
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /**

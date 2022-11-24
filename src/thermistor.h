@@ -100,7 +100,7 @@ typedef struct
         struct
         {
             float32_t beta;         /**<NTC Beta factor */
-            float32_t nom_val;      /**<Nominal value of NTC in Ohms */
+            float32_t nom_val;      /**<Nominal value of NTC @25degC in Ohms */
         } ntc;
 
         /**<PT1000 */
