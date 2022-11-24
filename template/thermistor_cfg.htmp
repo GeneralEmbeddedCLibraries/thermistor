@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-
 // USER CODE BEGIN...
 
 #include "project_config.h"
@@ -35,7 +34,6 @@
 #include "middleware/cli/cli/src/cli.h"
 
 // USER CODE END...
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -113,16 +111,10 @@ typedef enum
   #define TH_ASSERT)                        { ; }
  #endif
 
-
-
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
-
+const void * thermistor_cfg_get_table(void);
 
 #endif // __THERMISTOR_CFG_H
 

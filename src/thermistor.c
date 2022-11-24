@@ -25,10 +25,7 @@
 #include <math.h>
 
 #include "thermistor.h"
-#include "../../thermistor_cfg.h"
 
-// ADC low level driver
-#include "drivers/peripheral/adc/adc.h"
 
 // Filer module
 #if ( 1 == THERMISTOR_FILTER_EN )
@@ -51,16 +48,6 @@
 
 
 
-
-/**
- *	Supported sensor types
- */
-typedef enum
-{
-	eTH_TYPE_NTC = 0,		/**<NTC thermistor */
-	eTH_TYPE_PT1000			/**<PT1000 */
-} th_temp_type_t;
-
 /**
  *	Temperature values
  */
@@ -71,89 +58,21 @@ typedef struct
 	float32_t kelvin;	/**<Temperature in Kelvins */		
 } th_temp_val_t;
 
-/**
- *	Thermistor configuration
- */
-typedef struct
-{	
-	float32_t		beta;			/**<NTC Beta factor */
-	float32_t		nom_val;		/**<Nominal value of NTC in Ohms */
-	float32_t		pull_up_val;	/**<Value of pull-up resisotr in Ohms */
-	float32_t		lpf_fc;			/**<LPF cutoff frequency */
-	th_temp_type_t	type;			/**<Sensor type */
-	adc_pins_t		adc_ch;			/**<ADC channel */	
 
-
-} th_cfg_t;
 
 
 
 typedef struct
 {
-	p_filter_rc_t	lpf;			/**<Low pass filter */
-	th_temp_val_t	temp;			/**<Temperature values */
-	th_temp_val_t	temp_filt;		/**<Filtered temperature values */
+	th_temp_val_t	temp;               /**<Temperature values */
+	th_temp_val_t	temp_filt;          /**<Filtered temperature values */
+
+    #if ( 1 == THERMISTOR_FILTER_EN )
+        p_filter_rc_t	lpf;			/**<Low pass filter */
+    #endif
 } th_data_t;
 
 
-
-
-/**
- * 	Thermistor handler period
- *
- * 	Unit: sec
- */
-#define TH_HNDL_PERIOD_S				( 0.01f )
-
-/**
- * 	Thermistor handler frequency
- *
- * 	Unit: Hz
- */
-#define TH_HNDL_FREQ_HZ					( 1.0f / TH_HNDL_PERIOD_S )
-
-
-
-
-/**
- * 	Enable/Disable debug mode
- *
- * 	@note	Disable in release!
- */
-#define TH_DEBUG_EN                    ( 1 )
-
-#ifndef DEBUG
-    #undef TH_DEBUG_EN
-    #define TH_DEBUG_EN 0
-#endif
-
-/**
- * 	Debug communication port macros
- */
-#if ( 1 == TH_DEBUG_EN )
-	#define TH_DBG_PRINT( ... )        ( cli_printf( __VA_ARGS__ ))
-#else
-	#define TH_DBG_PRINT( ... )        { ; }
-
-#endif
-
-/**
- *		USB CDC asserts
- *
- * 	@note	Disable in release!
- */
- #define TH_ASSERT_EN                  ( 1 )
-
- #if ( TH_ASSERT_EN )
-	#define TH_ASSERT(x)               { PROJECT_CONFIG_ASSERT(x) }
- #else
-  #define TH_ASSERT)                   { ; }
- #endif
-
- #ifndef DEBUG
-    #undef TH_ASSERT_EN
-    #define TH_ASSERT_EN 0
-#endif
 
 
 
@@ -166,22 +85,16 @@ typedef struct
  */
 static bool gb_is_init = false;
 
+/**
+ * 	Pointer to configuration table
+ */
+static const th_cfg_t * gp_cfg_table = NULL;
 
+/**
+ *  Thermistor data
+ */
 static th_data_t g_th_data[eTH_NUM_OF] = {0};
 
-static const th_cfg_t g_th_cfg[eTH_NUM_OF] = 
-{
-	// NTC Configurations
-	// ----------------------------------------------------------------------------------------------
-	// ----------------------------------------------------------------------------------------------
-	[eTH_NTC_INT]	= { .adc_ch = eADC_TEMP_INT,	.type = eTH_TYPE_NTC,	.lpf_fc = 1.0f,		.beta = 3380.0f, .nom_val = 10e3,	.pull_up_val = 11e3		},
-	[eTH_NTC_COMP]	= { .adc_ch = eADC_TEMP_COMP,	.type = eTH_TYPE_NTC,	.lpf_fc = 1.0f,		.beta = 3380.0f, .nom_val = 10e3,	.pull_up_val = 11e3		},
-
-	// PT1000 Configurations
-	// ----------------------------------------------------------------------------------------------
-	// ----------------------------------------------------------------------------------------------
-	[eTH_PTC_AUX]	= { .adc_ch = eADC_TEMP_AUX,	.type = eTH_TYPE_PT1000, .lpf_fc = 1.0f,	.beta = 0.0f		},
-};
 
 
 
@@ -262,33 +175,48 @@ th_status_t th_init(void)
 
 	if ( false == gb_is_init )
 	{		
-		for ( uint32_t ch = 0; ch < eTH_NUM_OF; ch++ )
+    	// Get configuration table
+		gp_cfg_table = thermistor_cfg_get_table();
+        
+        // Configuration table missing
+		if ( NULL != gp_cfg_table )
 		{
-			// Get current ADC value
-			th_volt = adc_get_real( g_th_cfg[ch].adc_ch );
+            // Init all channels
+            for ( uint32_t ch = 0; ch < eTH_NUM_OF; ch++ )
+            {
+                // Get current ADC value
+                th_volt = adc_get_real( gp_cfg_table[ch].adc_ch );
 
-			// Convert to degC
-			if ( eTH_TYPE_NTC == g_th_cfg[ch].type )
-			{
-				g_th_data[ch].temp.degC = th_ntc_vol_convert_to_degC( th_volt, g_th_cfg[ch].beta, g_th_cfg[ch].nom_val, g_th_cfg[ch].pull_up_val );
-			}
-			else
-			{
-				g_th_data[ch].temp.degC = -1.0f;
-			}
+                // Convert to degC
+                if ( eTH_TYPE_NTC == gp_cfg_table[ch].type )
+                {
+                    g_th_data[ch].temp.degC = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].beta, gp_cfg_table[ch].nom_val, gp_cfg_table[ch].pull_up_val );
+                }
+                else
+                {
+                    g_th_data[ch].temp.degC = -1.0f;
+                }
 
-			// Init LPF
-			if ( eFILTER_OK != filter_rc_init( &g_th_data[ch].lpf, g_th_cfg[ch].lpf_fc, TH_HNDL_FREQ_HZ, 1, g_th_data[ch].temp.degC ))
-			{
-				status = eTH_ERROR;
-				break;
-			}
+                #if ( 1 == THERMISTOR_FILTER_EN )
 
-			g_th_data[ch].temp_filt.degC = g_th_data[ch].temp.degC;
-
-
-		}
-
+                    // Init LPF 
+                    if ( eFILTER_OK != filter_rc_init( &g_th_data[ch].lpf, gp_cfg_table[ch].lpf_fc, TH_HNDL_FREQ_HZ, 1, g_th_data[ch].temp.degC ))
+                    {
+                        status = eTH_ERROR;
+                        break;
+                    }
+                    else
+                    {
+                        g_th_data[ch].temp_filt.degC = g_th_data[ch].temp.degC;
+                    }
+            
+                #endif
+            }
+        }
+        else
+        {
+            status = eTH_ERROR;
+        }
 
 		// Init success
 		if ( eTH_OK == status )
@@ -330,12 +258,12 @@ th_status_t th_hndl(void)
 		for ( uint32_t ch = 0; ch < eTH_NUM_OF; ch++ )
 		{
 			// Get current ADC value
-			th_volt = adc_get_real( g_th_cfg[ch].adc_ch );
+			th_volt = adc_get_real( gp_cfg_table[ch].adc_ch );
 
-			// Convert to degC
-			if ( eTH_TYPE_NTC == g_th_cfg[ch].type )
+			// NTC type
+			if ( eTH_TYPE_NTC == gp_cfg_table[ch].type )
 			{
-				g_th_data[ch].temp.degC = th_ntc_vol_convert_to_degC( th_volt, g_th_cfg[ch].beta, g_th_cfg[ch].nom_val, g_th_cfg[ch].pull_up_val );
+				g_th_data[ch].temp.degC = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].beta, gp_cfg_table[ch].nom_val, gp_cfg_table[ch].pull_up_val );
 			}
 			else
 			{
@@ -343,7 +271,9 @@ th_status_t th_hndl(void)
 			}
 
 			// Update filter
-			g_th_data[ch].temp_filt.degC = filter_rc_update( g_th_data[ch].lpf, g_th_data[ch].temp.degC );
+            #if ( 1 == THERMISTOR_FILTER_EN )
+                g_th_data[ch].temp_filt.degC = filter_rc_update( g_th_data[ch].lpf, g_th_data[ch].temp.degC );
+            #endif
 		}
 	}
 	else
@@ -355,23 +285,6 @@ th_status_t th_hndl(void)
 }
 
 
-th_status_t th_bg_hndl(void)
-{
-	th_status_t status = eTH_OK;
-	
-	TH_ASSERT( true == gb_is_init );
-
-	if ( true == gb_is_init )
-	{
-
-	}
-	else
-	{
-		status = eTH_ERROR;
-	}
-
-	return status;
-}
 
 
 th_status_t th_get_degC(const th_opt_t th, float32_t * const p_temp)
@@ -436,18 +349,17 @@ th_status_t th_get_kelvin(const th_opt_t th, float32_t * const p_temp)
 	return status;
 }
 
-
-th_status_t th_get_degC_filt(const th_opt_t th, float32_t * const p_temp)
+th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
 {
 	th_status_t status = eTH_OK;
 
 	TH_ASSERT( true == gb_is_init );
-	TH_ASSERT( NULL != p_temp );
+	TH_ASSERT( NULL != p_res );
 
 	if	(	( true == gb_is_init )
-		&&	( NULL != p_temp ))
+		&&	( NULL != p_res ))
 	{
-		*p_temp = g_th_data[th].temp_filt.degC;
+		// TODO: ...
 	}
 	else
 	{
@@ -458,85 +370,110 @@ th_status_t th_get_degC_filt(const th_opt_t th, float32_t * const p_temp)
 }
 
 
-th_status_t th_get_degF_filt(const th_opt_t th, float32_t * const p_temp)
-{
-	th_status_t status = eTH_OK;
+#if ( 1 == THERMISTOR_FILTER_EN )
 
-	TH_ASSERT( true == gb_is_init );
-	TH_ASSERT( NULL != p_temp );
 
-	if	(	( true == gb_is_init )
-		&&	( NULL != p_temp ))
-	{
-		*p_temp = g_th_data[th].temp_filt.degF;
-	}
-	else
-	{
-		status = eTH_ERROR;
-	}
+    th_status_t th_get_degC_filt(const th_opt_t th, float32_t * const p_temp)
+    {
+    	th_status_t status = eTH_OK;
+
+    	TH_ASSERT( true == gb_is_init );
+    	TH_ASSERT( NULL != p_temp );
+
+    	if	(	( true == gb_is_init )
+    		&&	( NULL != p_temp ))
+    	{
+    		*p_temp = g_th_data[th].temp_filt.degC;
+    	}
+    	else
+    	{
+    		status = eTH_ERROR;
+    	}
 	
-	return status;
-}
+    	return status;
+    }
 
 
-th_status_t th_get_kelvin_filt(const th_opt_t th, float32_t * const p_temp)
-{
-	th_status_t status = eTH_OK;
+    th_status_t th_get_degF_filt(const th_opt_t th, float32_t * const p_temp)
+    {
+    	th_status_t status = eTH_OK;
 
-	TH_ASSERT( true == gb_is_init );
-	TH_ASSERT( NULL != p_temp );
+    	TH_ASSERT( true == gb_is_init );
+    	TH_ASSERT( NULL != p_temp );
 
-	if	(	( true == gb_is_init )
-		&&	( NULL != p_temp ))
-	{
-		*p_temp = g_th_data[th].temp_filt.kelvin;
-	}
-	else
-	{
-		status = eTH_ERROR;
-	}
+    	if	(	( true == gb_is_init )
+    		&&	( NULL != p_temp ))
+    	{
+    		*p_temp = g_th_data[th].temp_filt.degF;
+    	}
+    	else
+    	{
+    		status = eTH_ERROR;
+    	}
 	
-	return status;
-}
+    	return status;
+    }
 
 
-th_status_t th_set_lpf_fc(const th_opt_t th, const float32_t fc)
-{
-	th_status_t status = eTH_OK;
+    th_status_t th_get_kelvin_filt(const th_opt_t th, float32_t * const p_temp)
+    {
+    	th_status_t status = eTH_OK;
 
-	TH_ASSERT( true == gb_is_init );
+    	TH_ASSERT( true == gb_is_init );
+    	TH_ASSERT( NULL != p_temp );
 
-	if ( true == gb_is_init )
-	{
-
-	}
-	else
-	{
-		status = eTH_ERROR;
-	}
+    	if	(	( true == gb_is_init )
+    		&&	( NULL != p_temp ))
+    	{
+    		*p_temp = g_th_data[th].temp_filt.kelvin;
+    	}
+    	else
+    	{
+    		status = eTH_ERROR;
+    	}
 	
-	return status;
-}
+    	return status;
+    }
 
 
-th_status_t th_get_lpf_fc(const th_opt_t th, float32_t * const p_fc)
-{
-	th_status_t status = eTH_OK;
+    th_status_t th_set_lpf_fc(const th_opt_t th, const float32_t fc)
+    {
+    	th_status_t status = eTH_OK;
 
-	TH_ASSERT( true == gb_is_init );
+    	TH_ASSERT( true == gb_is_init );
 
-	if ( true == gb_is_init )
-	{
+    	if ( true == gb_is_init )
+    	{
 
-	}
-	else
-	{
-		status = eTH_ERROR;
-	}
+    	}
+    	else
+    	{
+    		status = eTH_ERROR;
+    	}
 	
-	return status;
-}
+    	return status;
+    }
 
+
+    th_status_t th_get_lpf_fc(const th_opt_t th, float32_t * const p_fc)
+    {
+    	th_status_t status = eTH_OK;
+
+    	TH_ASSERT( true == gb_is_init );
+
+    	if ( true == gb_is_init )
+    	{
+
+    	}
+    	else
+    	{
+    		status = eTH_ERROR;
+    	}
+	
+    	return status;
+    }
+
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////
