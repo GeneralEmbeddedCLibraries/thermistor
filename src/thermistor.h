@@ -93,10 +93,24 @@ typedef struct
     float32_t		lpf_fc;			/**<LPF cutoff frequency */
     th_temp_type_t	type;			/**<Sensor type */
     
-    // For NTC calc
-	float32_t		beta;			/**<NTC Beta factor */
-	float32_t		nom_val;		/**<Nominal value of NTC in Ohms */
-	
+    /**<Sensor specific configurations */
+    union
+    {
+        /**<NTC */
+        struct
+        {
+            float32_t beta;         /**<NTC Beta factor */
+            float32_t nom_val;      /**<Nominal value of NTC in Ohms */
+        } ntc;
+
+        /**<PT1000 */
+        struct
+        {
+            float32_t nom_val;
+        } pt1000;
+
+    } sensor;
+
 
 } th_cfg_t;
 

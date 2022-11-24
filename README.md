@@ -1,10 +1,18 @@
 # **Thermistor**
 
-Thermistor module converts temperature sensor measurement into real values in °C, °F or Kelvin units. Module is written in C programming lang with empasis to be highly portable and configurable to different HW layouts and temperature sensors. As name suggest module supports only pasive temperature measurement devices. For now NTC and PT1000.
+Thermistor module converts temperature sensor measurement into real values in °C, °F or Kelvin units. Module is written in C programming lang with empasis to be highly portable and configurable to different HW layouts and temperature sensors. As name suggest module supports only pasive temperature measurement devices. For now NTC and PT1000 sensor types are supported.
 
 Supported thermistors HW topologies:
+ - NTC with pull-down resistor
  - NTC with pull-up resistor
- - PT1000 with pull-up resistor 
+ - NTC both pull-down and pull-up resistor
+ - PT1000 with pull-down resistor
+ - PT1000 with pull-up resistor
+ - PT1000 both pull-down and pull-up resistor
+
+Picture bellow shows all supported NTC/PT1000 thermistor hardware connections:
+![](doc/pic/ntc_calculations_2_hw_options.jpg)
+
 
 
 ## **Dependencies**
@@ -22,7 +30,7 @@ Additionally ADC low level driver must take following path:
 "root/drivers/periphery/adc/adc.h"
 ```
 
-### **2. Filter module **
+### **2. Filter module**
 If enabled filter *THERMISTOR_FILTER_EN = 1*, then [Filter](https://github.com/GeneralEmbeddedCLibraries/filter) must be part of project. Filter module must take following path:
 ```
 "root/middleware/filter/src/filter.h"
@@ -55,45 +63,48 @@ root/drivers/devices/thermistor/"module_space"
 
 
 3. List all used thermistors inside *thermistor_cfg.h*:
-    ```C
-    /**
-    *  Thermistor count
-    */
-    typedef enum
-    {
-        // USER CODE BEGIN...
-        
-        eTH_NTC_INT = 0,
-        eTH_NTC_COMP,
-        eTH_PTC_AUX,
+```C
+/**
+*  Thermistor count
+*/
+typedef enum
+{
+    // USER CODE BEGIN...
+    
+    eTH_NTC_INT = 0,
+    eTH_NTC_COMP,
+    eTH_PTC_AUX,
 
-        // USER CODE END...
+    // USER CODE END...
 
-        eTH_NUM_OF
-    } th_opt_t;
-    ```
+    eTH_NUM_OF
+} th_opt_t;
+```
 
 4. Setup thermistor configurations inside *thermistor_cfg.c*:
-TODO: 
+
+
+
+For hardware related configuration (*hw_conn* and *hw_pull*) help with picture above.
 
 5. Initialize thermistor module:
-	```C
-	// Init thermistor
-	if ( eTH_OK != th_init())
-	{
-        // Initialization error...
-		// Furhter actions here...
-	}
+```C
+// Init thermistor
+if ( eTH_OK != th_init())
+{
+    // Initialization error...
+    // Furhter actions here...
+}
 	```
 
 6. Make sure to call *th_hndl()* at fixed period of *TH_HNDL_PERIOD_S* configurations:
-	```C
-	@at TH_HNDL_PERIOD_S period
-	{
-        // Handle thermistor sensors
-        th_hndl();
-	}
-	```
+```C
+@at TH_HNDL_PERIOD_S period
+{
+    // Handle thermistor sensors
+    th_hndl();
+}
+```
 
 
 

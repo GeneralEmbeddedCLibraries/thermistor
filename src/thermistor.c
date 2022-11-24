@@ -190,7 +190,7 @@ th_status_t th_init(void)
                 // Convert to degC
                 if ( eTH_TYPE_NTC == gp_cfg_table[ch].type )
                 {
-                    g_th_data[ch].temp.degC = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].beta, gp_cfg_table[ch].nom_val, gp_cfg_table[ch].pull_up_val );
+                    g_th_data[ch].temp.degC = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].sensor.ntc.beta, gp_cfg_table[ch].sensor.ntc.nom_val, gp_cfg_table[ch].pull_up );
                 }
                 else
                 {
@@ -263,7 +263,7 @@ th_status_t th_hndl(void)
 			// NTC type
 			if ( eTH_TYPE_NTC == gp_cfg_table[ch].type )
 			{
-				g_th_data[ch].temp.degC = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].beta, gp_cfg_table[ch].nom_val, gp_cfg_table[ch].pull_up_val );
+				g_th_data[ch].temp.degC = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].sensor.ntc.beta, gp_cfg_table[ch].sensor.ntc.nom_val, gp_cfg_table[ch].pull_up );
 			}
 			else
 			{
