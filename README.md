@@ -95,7 +95,7 @@ if ( eTH_OK != th_init())
     // Initialization error...
     // Furhter actions here...
 }
-	```
+```
 
 6. Make sure to call *th_hndl()* at fixed period of *TH_HNDL_PERIOD_S* configurations:
 ```C
