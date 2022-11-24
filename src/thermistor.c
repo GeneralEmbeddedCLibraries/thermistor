@@ -23,19 +23,33 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+
 #include "thermistor.h"
+#include "../../thermistor_cfg.h"
 
-
+// ADC low level driver
 #include "drivers/peripheral/adc/adc.h"
 
-#include "middleware/cli/cli/src/cli.h"
-
-#include "middleware/filter/src/filter.h"
+// Filer module
+#if ( 1 == THERMISTOR_FILTER_EN )
+    #include "middleware/filter/src/filter.h"
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * 	Thermistor handler frequency
+ *
+ * 	Unit: Hz
+ */
+#define TH_HNDL_FREQ_HZ					( 1.0f / TH_HNDL_PERIOD_S )
+
+
+
+
 
 
 /**

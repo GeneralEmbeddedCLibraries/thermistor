@@ -3,7 +3,7 @@
 // This software is under MIT licence (https://opensource.org/licenses/MIT)
 ////////////////////////////////////////////////////////////////////////////////
 /**
-*@file      thermistor.c
+*@file      thermistor.h
 *@brief     Thermistor measurement and processing
 *@author    Ziga Miklosic
 *@date      23.11.2022
@@ -41,21 +41,7 @@ typedef enum
 	eTH_ERROR_SHORTED	= 0x04,		/**<Shorted */
 } th_status_t;
 
-/**
- *  Thermistor count
- */
-typedef enum
-{
-    // USER CODE BEGIN...
-	
-	eTH_NTC_INT = 0,
-	eTH_NTC_COMP,
-	eTH_PTC_AUX,
 
-	// USER CODE END...
-
-    eTH_NUM_OF
-} th_opt_t;
 
 /**
  *	32-bit floating point definition
