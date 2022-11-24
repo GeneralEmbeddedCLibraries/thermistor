@@ -59,6 +59,7 @@ static const th_cfg_t g_th_cfg[eTH_NUM_OF] =
         .sensor.ntc.nom_val = 10e3f,
         .range.min          = -25.0f,
         .range.max          = 150.0f,
+        .err_type           = eTH_ERR_FLOATING,
     },
 
     [eTH_NTC_COMP]	= 
@@ -74,6 +75,7 @@ static const th_cfg_t g_th_cfg[eTH_NUM_OF] =
         .sensor.ntc.nom_val = 10e3f,
         .range.min          = -25.0f,
         .range.max          = 150.0f,
+        .err_type           = eTH_ERR_FLOATING,
     },
 
 

@@ -59,6 +59,8 @@ typedef struct
     #if ( 1 == THERMISTOR_FILTER_EN )
         p_filter_rc_t	lpf;			/**<Low pass filter */
     #endif
+
+    th_status_t      status;             /**<Thermistor status */
 } th_data_t;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -88,6 +90,7 @@ static float32_t    th_calc_res_both_pull       (const th_opt_t th);
 static float32_t    th_calc_resistance          (const th_opt_t th);
 static float32_t    th_calc_ntc_temperature     (const float32_t rth, const float32_t beta, const float32_t rth_nom);
 static th_status_t  th_init_filter              (const th_opt_t th);
+static th_status_t  th_status_hndl              (const th_opt_t th, const float32_t temp);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -328,6 +331,76 @@ static th_status_t th_init_filter(const th_opt_t th)
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
+* @brief        Handle thermistor status
+*
+* @param[in]    th      - Thermistor option
+* @param[in]    temp    - Thermistor temperature
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
+static th_status_t th_status_hndl(const th_opt_t th, const float32_t temp)
+{
+    th_status_t status = eTH_OK;
+
+    // Check for status if:
+    //      1. Error type is floating
+    //  OR      2a. Error type is permanent
+    //      AND 2b. Status is OK 
+    if  (    ( eTH_ERR_FLOATING == gp_cfg_table[th].err_type )
+        ||  (( eTH_ERR_PERMANENT == gp_cfg_table[th].err_type ) && ( eTH_OK == g_th_data[th].status )))
+    {
+        // Above MAX range
+        if ( temp > gp_cfg_table[th].range.max )
+        {
+            // Sensor type
+            switch( gp_cfg_table[th].type )
+            {
+                case eTH_TYPE_NTC:
+                    status = eTH_ERROR_SHORT;
+                    break;
+
+                case eTH_TYPE_PT1000:
+                    status = eTH_ERROR_OPEN;
+                    break;
+
+                default:
+                    TH_ASSERT( 0 );
+                    break;
+            } 
+        }
+
+        // Bellow MIN range
+        else if (temp < gp_cfg_table[th].range.min )
+        {
+            // Sensor type
+            switch( gp_cfg_table[th].type )
+            {
+                case eTH_TYPE_NTC:
+                    status = eTH_ERROR_OPEN;
+                    break;
+
+                case eTH_TYPE_PT1000:
+                    status = eTH_ERROR_SHORT;
+                    break;
+
+                default:
+                    TH_ASSERT( 0 );
+                    break;
+            }     
+        }
+    
+        // In NORMAL range
+        else
+        {
+            status = eTH_OK;
+        }
+    }
+
+    return status;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
  * @} <!-- END GROUP -->
  */
 ////////////////////////////////////////////////////////////////////////////////
@@ -440,7 +513,12 @@ th_status_t th_hndl(void)
 			// Update filter
             #if ( 1 == THERMISTOR_FILTER_EN )
                 g_th_data[th].temp_filt = filter_rc_update( g_th_data[th].lpf, g_th_data[th].temp );
+            #else
+                g_th_data[th].temp_filt = g_th_data[th].temp;
             #endif
+
+            // Check status on filtered temperature
+            g_th_data[th].status = th_status_hndl( th, g_th_data[th].temp_filt );
 		}
 	}
 	else
@@ -576,6 +654,35 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
 	
 	return status;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Get thermistor status
+*
+* @param[in]    th      - Thermistor option
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
+th_status_t th_get_status(const th_opt_t th)
+{
+    th_status_t status = eTH_OK;
+
+    TH_ASSERT( true == gb_is_init );
+    TH_ASSERT( th < eTH_NUM_OF );
+
+    if	(	( true == gb_is_init )
+        &&  ( th < eTH_NUM_OF ))
+    {
+        status = g_th_data[th].status;
+    }
+    else
+    {
+        status = eTH_ERROR;
+    }
+
+    return status;    
+}
+
 
 #if ( 1 == THERMISTOR_FILTER_EN )
 

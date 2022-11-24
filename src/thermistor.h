@@ -43,8 +43,17 @@ typedef enum
     eTH_OK				= 0,		/**<Normal operation */
     eTH_ERROR			= 0x01,		/**<General error code */
 	eTH_ERROR_OPEN		= 0x02,		/**<Open connection on sensor terminal*/
-	eTH_ERROR_SHORTED	= 0x04,		/**<Shorted sensor connections */
+	eTH_ERROR_SHORT     = 0x04,		/**<Shorted sensor connections */
 } th_status_t;
+
+/**
+ *  Thermistor error status type
+ */
+typedef enum
+{
+    eTH_ERR_FLOATING = 0,       /**<Floating error - clears after error condition is gone */
+    eTH_ERR_PERMANENT,          /**<Permanent error - clears either on reset or API call of th_reset_error */
+} th_err_type_t;
 
 /**
  *	Sensor types
@@ -118,6 +127,8 @@ typedef struct
         float32_t max;              /**<Maximum allowed limit in degC */
     } range;
 
+    th_err_type_t   err_type;       /**<Error type */
+
 } th_cfg_t;
 
 /**
@@ -135,6 +146,7 @@ th_status_t th_get_degC			(const th_opt_t th, float32_t * const p_temp);
 th_status_t th_get_degF			(const th_opt_t th, float32_t * const p_temp);
 th_status_t th_get_kelvin		(const th_opt_t th, float32_t * const p_temp);
 th_status_t th_get_resistance   (const th_opt_t th, float32_t * const p_res);
+th_status_t th_get_status       (const th_opt_t th);
 
 #if ( 1 == THERMISTOR_FILTER_EN )
     th_status_t th_get_degC_filt	(const th_opt_t th, float32_t * const p_temp);
