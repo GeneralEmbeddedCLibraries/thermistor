@@ -26,12 +26,10 @@
 
 #include "thermistor.h"
 
-
 // Filer module
 #if ( 1 == THERMISTOR_FILTER_EN )
     #include "middleware/filter/src/filter.h"
 #endif
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -44,37 +42,19 @@
  */
 #define TH_HNDL_FREQ_HZ					( 1.0f / TH_HNDL_PERIOD_S )
 
-
-
-
-
 /**
- *	Temperature values
+ *  Thermistor data
  */
 typedef struct
 {
-	float32_t degC;		/**<Temperature value in degree Celsius */
-	float32_t degF;		/**<Temperature value in degree Fahrenheit */
-	float32_t kelvin;	/**<Temperature in Kelvins */		
-} th_temp_val_t;
-
-
-
-
-
-typedef struct
-{
-	th_temp_val_t	temp;               /**<Temperature values */
-	th_temp_val_t	temp_filt;          /**<Filtered temperature values */
+    float32_t       res;                /**<Thermistor resistance */
+	float32_t   	temp;               /**<Temperature values in degC */
+	float32_t   	temp_filt;          /**<Filtered temperature values in degC */
 
     #if ( 1 == THERMISTOR_FILTER_EN )
         p_filter_rc_t	lpf;			/**<Low pass filter */
     #endif
 } th_data_t;
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Variables
@@ -95,13 +75,146 @@ static const th_cfg_t * gp_cfg_table = NULL;
  */
 static th_data_t g_th_data[eTH_NUM_OF] = {0};
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Function Prototypes
+////////////////////////////////////////////////////////////////////////////////
+static float32_t th_calc_resistance(const th_opt_t th);
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
 
+
+static float32_t th_calc_res_single_pull(const th_opt_t th)
+{
+    float32_t th_res = 0.0f;
+    
+    // Get thermistor voltage
+    const float32_t vth = adc_get_real( gp_cfg_table[th].adc_ch );
+
+    // Get ADC reference voltage
+    const float32_t vcc = adc_get_vref();
+    
+    // Check for valid voltage ranges
+    if (( vth < vcc ) && ( vth >= 0.0f ))
+    {
+        // Thermistor on low side
+        if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw_conn )
+        {
+            // Thermistor on low side with pull-up
+            th_res = (float32_t) (( gp_cfg_table[th].pull_up * vth ) / ( vcc - vth ));
+        }
+
+        // Thermistor on high side
+        else
+        {   
+            // Thermistor on high side with pull-down
+            th_res = (float32_t) (( gp_cfg_table[th].pull_down * vth ) / ( vcc - vth ));
+        } 
+    }
+    
+    // Unplusable voltage
+    else
+    {
+        th_res = -1.0f;
+    } 
+    
+    return th_res;     
+}
+
+static float32_t th_calc_res_both_pull(const th_opt_t th)
+{
+    float32_t th_res = 0.0f;
+    
+    // Get thermistor voltage
+    const float32_t vth = adc_get_real( gp_cfg_table[th].adc_ch );
+
+    // Get ADC reference voltage
+    const float32_t vcc = adc_get_vref();
+    
+    // Check for valid voltage ranges
+    if (( vth < vcc ) && ( vth >= 0.0f ))
+    {
+        // Thermistor on low side
+        if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw_conn )
+        {
+            // Thermistor on low side with both resistors
+            th_res = (float32_t) ((( vcc - vth ) / ( gp_cfg_table[th].pull_up * vth )) - ( 1.0f / gp_cfg_table[th].pull_down ));
+            
+            // Check for division by zero
+            if ( th_res > 0.0f )
+            {
+                th_res = (float32_t)( 1.0f / th_res );
+            }
+
+            //  TODO: Check what to do if that happens. Might happen in real circuit under specific circuitstainces...
+            else
+            {
+                TH_DBG_PRINT( "TH: Unhandler event..." );
+                TH_ASSERT( 0 );
+            }
+        }
+
+        // Thermistor on high side
+        else
+        {   
+            // Thermistor on low side with both resistors
+            th_res = (float32_t) ((( vcc - vth ) / ( gp_cfg_table[th].pull_down * vth )) - ( 1.0f / gp_cfg_table[th].pull_up ));
+            
+            // Check for division by zero
+            if ( th_res > 0.0f )
+            {
+                th_res = (float32_t)( 1.0f / th_res );
+            }
+
+            //  TODO: Check what to do if that happens. Might happen in real circuit under specific circuitstainces...
+            else
+            {
+                TH_DBG_PRINT( "TH: Unhandler event..." );
+                TH_ASSERT( 0 );
+            } 
+        } 
+    }
+    
+    // Unplusable voltage
+    else
+    {
+        th_res = -1.0f;
+    } 
+    
+    return th_res;     
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Calculate resistance of thermistor
+*
+* @note     In case of unplasible voltage -1 is returned!
+*
+* @param[in]    th      - Thermistor option
+* @return       res     - Resistance of thermistor
+*/
+////////////////////////////////////////////////////////////////////////////////
+static float32_t th_calc_resistance(const th_opt_t th)
+{
+    float32_t th_res = 0.0f;
+
+    // Single pull resistor
+    if  (   ( eTH_HW_PULL_UP    == gp_cfg_table[th].hw_pull )
+        ||  ( eTH_HW_PULL_DOWN  == gp_cfg_table[th].hw_pull ))
+    {
+        th_res = th_calc_res_single_pull( th );
+    }
+
+    // Both pull resistors
+    else
+    {
+        th_res = th_calc_res_both_pull( th );
+    }
+
+    return th_res;
+}
 
 
 
@@ -124,9 +237,11 @@ static float32_t th_ntc_vol_convert_to_degC(const float32_t ntc_v, const float32
 	float32_t temp;
 	float32_t ntc_r;
 
+    const float32_t vcc = adc_get_vref();
+
 	// Catch division by 0
 	// This also indicates that something is wrong with temperature sensor
-	if 	(	( ADC_REF_V == ntc_v )
+	if 	(	( vcc == ntc_v )
 		||	( 0.0f == ntc_nominal_val ))
 	{
 		ntc_r = 0;
@@ -141,7 +256,7 @@ static float32_t th_ntc_vol_convert_to_degC(const float32_t ntc_v, const float32
 	else
 	{
 		// Calculate NTC resistance
-		ntc_r = (float32_t) (( pullup_val * ntc_v ) / ( ADC_REF_V - ntc_v));
+		ntc_r = (float32_t) (( pullup_val * ntc_v ) / ( vcc - ntc_v));
 
 		// Calculate temperature
 		temp = (float32_t) (( 1.0f / (( 1.0f / 298.15f ) + (( 1.0f / beta ) * log( ntc_r / ntc_nominal_val )))) - 273.15f );
@@ -190,24 +305,24 @@ th_status_t th_init(void)
                 // Convert to degC
                 if ( eTH_TYPE_NTC == gp_cfg_table[ch].type )
                 {
-                    g_th_data[ch].temp.degC = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].sensor.ntc.beta, gp_cfg_table[ch].sensor.ntc.nom_val, gp_cfg_table[ch].pull_up );
+                    g_th_data[ch].temp = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].sensor.ntc.beta, gp_cfg_table[ch].sensor.ntc.nom_val, gp_cfg_table[ch].pull_up );
                 }
                 else
                 {
-                    g_th_data[ch].temp.degC = -1.0f;
+                    g_th_data[ch].temp = -1.0f;
                 }
 
                 #if ( 1 == THERMISTOR_FILTER_EN )
 
                     // Init LPF 
-                    if ( eFILTER_OK != filter_rc_init( &g_th_data[ch].lpf, gp_cfg_table[ch].lpf_fc, TH_HNDL_FREQ_HZ, 1, g_th_data[ch].temp.degC ))
+                    if ( eFILTER_OK != filter_rc_init( &g_th_data[ch].lpf, gp_cfg_table[ch].lpf_fc, TH_HNDL_FREQ_HZ, 1, g_th_data[ch].temp ))
                     {
                         status = eTH_ERROR;
                         break;
                     }
                     else
                     {
-                        g_th_data[ch].temp_filt.degC = g_th_data[ch].temp.degC;
+                        g_th_data[ch].temp_filt = g_th_data[ch].temp;
                     }
             
                 #endif
@@ -263,16 +378,16 @@ th_status_t th_hndl(void)
 			// NTC type
 			if ( eTH_TYPE_NTC == gp_cfg_table[ch].type )
 			{
-				g_th_data[ch].temp.degC = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].sensor.ntc.beta, gp_cfg_table[ch].sensor.ntc.nom_val, gp_cfg_table[ch].pull_up );
+				g_th_data[ch].temp = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].sensor.ntc.beta, gp_cfg_table[ch].sensor.ntc.nom_val, gp_cfg_table[ch].pull_up );
 			}
 			else
 			{
-				g_th_data[ch].temp.degC = -1.0f;
+				g_th_data[ch].temp = -1.0f;
 			}
 
 			// Update filter
             #if ( 1 == THERMISTOR_FILTER_EN )
-                g_th_data[ch].temp_filt.degC = filter_rc_update( g_th_data[ch].lpf, g_th_data[ch].temp.degC );
+                g_th_data[ch].temp_filt = filter_rc_update( g_th_data[ch].lpf, g_th_data[ch].temp );
             #endif
 		}
 	}
@@ -297,7 +412,7 @@ th_status_t th_get_degC(const th_opt_t th, float32_t * const p_temp)
 	if	(	( true == gb_is_init )
 		&&	( NULL != p_temp ))
 	{
-		*p_temp = g_th_data[th].temp.degC;
+		*p_temp = g_th_data[th].temp;
 	}
 	else
 	{
@@ -318,7 +433,8 @@ th_status_t th_get_degF(const th_opt_t th, float32_t * const p_temp)
 	if	(	( true == gb_is_init )
 		&&	( NULL != p_temp ))
 	{
-		*p_temp = g_th_data[th].temp.degF;
+        // TODO: Convert ...
+		*p_temp = g_th_data[th].temp;
 	}
 	else
 	{
@@ -339,7 +455,8 @@ th_status_t th_get_kelvin(const th_opt_t th, float32_t * const p_temp)
 	if	(	( true == gb_is_init )
 		&&	( NULL != p_temp ))
 	{
-		*p_temp = g_th_data[th].temp.kelvin;
+        // TODO: Convert...
+		*p_temp = g_th_data[th].temp;
 	}
 	else
 	{
@@ -383,7 +500,7 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
     	if	(	( true == gb_is_init )
     		&&	( NULL != p_temp ))
     	{
-    		*p_temp = g_th_data[th].temp_filt.degC;
+    		*p_temp = g_th_data[th].temp_filt;
     	}
     	else
     	{
@@ -404,7 +521,8 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
     	if	(	( true == gb_is_init )
     		&&	( NULL != p_temp ))
     	{
-    		*p_temp = g_th_data[th].temp_filt.degF;
+            // TODO: Convert...
+    		*p_temp = g_th_data[th].temp_filt;
     	}
     	else
     	{
@@ -425,7 +543,8 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
     	if	(	( true == gb_is_init )
     		&&	( NULL != p_temp ))
     	{
-    		*p_temp = g_th_data[th].temp_filt.kelvin;
+            // TODO: Convert...
+    		*p_temp = g_th_data[th].temp_filt;
     	}
     	else
     	{

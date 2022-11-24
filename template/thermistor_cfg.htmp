@@ -67,8 +67,6 @@ typedef enum
  */
 #define THERMISTOR_FILTER_EN                ( 1 )
 
-
-
 /**
  * 	Enable/Disable debug mode
  *

@@ -5,24 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project/module adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
-## Vmaj.min.dev - dd.mm.yyyy
+## V1.0.0 - dd.mm.yyyy
 
 ### Added
-- List of new features
+- Implemented NTC calculations with various HW configuration
 
-### Changed
-- List of changes in exsisting functionalities
+### Todo
+ - PT1000 calculations
+ 
+ - Extensive measurement of NTC measurement:
+    - NTC high side with single pull resistor
+    - NTC low side with single pull resistor
+    - NTC high side with both pull resistors
 
-### Deprecated
-- List of features soon-to-be removed
+ - Extensive measurement of PT1000 measurement:
+    - PT1000 high side with single pull resistor
+    - PT1000 low side with single pull resistor
+    - PT1000 high side with both pull resistors
 
-### Removed
-- List of now removed features
-
-### Fixed
-- List of bug fixes
-
-### Issues
-- List of known problems
 
 ---

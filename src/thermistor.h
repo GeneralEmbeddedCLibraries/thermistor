@@ -42,8 +42,8 @@ typedef enum
 {
     eTH_OK				= 0,		/**<Normal operation */
     eTH_ERROR			= 0x01,		/**<General error code */
-	eTH_ERROR_OPEN		= 0x02,		/**<Open connection */
-	eTH_ERROR_SHORTED	= 0x04,		/**<Shorted */
+	eTH_ERROR_OPEN		= 0x02,		/**<Open connection on sensor terminal*/
+	eTH_ERROR_SHORTED	= 0x04,		/**<Shorted sensor connections */
 } th_status_t;
 
 /**
@@ -90,7 +90,7 @@ typedef struct
     th_hw_pull_t    hw_pull;        /**<Hardware configuration of pull resistor connection */
     float32_t       pull_up;        /**<Resistance of pull-up resistor */
     float32_t       pull_down;      /**<Resistance of pull-down resistor */
-    float32_t		lpf_fc;			/**<LPF cutoff frequency */
+    float32_t		lpf_fc;			/**<Default LPF cutoff frequency */
     th_temp_type_t	type;			/**<Sensor type */
     
     /**<Sensor specific configurations */
@@ -111,6 +111,12 @@ typedef struct
 
     } sensor;
 
+    /**<Valid range */
+    struct
+    {
+        float32_t min;              /**<Minimum allowed limit in degC */
+        float32_t max;              /**<Maximum allowed limit in degC */
+    } range;
 
 } th_cfg_t;
 
