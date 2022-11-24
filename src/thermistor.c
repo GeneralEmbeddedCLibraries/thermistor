@@ -78,14 +78,27 @@ static th_data_t g_th_data[eTH_NUM_OF] = {0};
 ////////////////////////////////////////////////////////////////////////////////
 // Function Prototypes
 ////////////////////////////////////////////////////////////////////////////////
-static float32_t th_calc_resistance(const th_opt_t th);
+static float32_t    th_calc_res_single_pull     (const th_opt_t th);
+static float32_t    th_calc_res_both_pull       (const th_opt_t th);
+static float32_t    th_calc_resistance          (const th_opt_t th);
+static float32_t    th_calc_ntc_temperature     (const float32_t rth, const float32_t beta, const float32_t rth_nom);
+static th_status_t  th_init_filter              (const th_opt_t th);
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
 
-
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Calculate resistance of thermistor with single pull resistor
+*
+* @note     In case of unplasible voltage -1 is returned!
+*
+* @param[in]    th      - Thermistor option
+* @return       res     - Resistance of thermistor
+*/
+////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_res_single_pull(const th_opt_t th)
 {
     float32_t th_res = 0.0f;
@@ -123,6 +136,16 @@ static float32_t th_calc_res_single_pull(const th_opt_t th)
     return th_res;     
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Calculate resistance of thermistor with both pull resistors
+*
+* @note     In case of unplasible voltage -1 is returned!
+*
+* @param[in]    th      - Thermistor option
+* @return       res     - Resistance of thermistor
+*/
+////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_res_both_pull(const th_opt_t th)
 {
     float32_t th_res = 0.0f;
@@ -216,56 +239,87 @@ static float32_t th_calc_resistance(const th_opt_t th)
     return th_res;
 }
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 /*!
-* @brief        Convert NTC voltage to degree C
+* @brief        Convert NTC resistance to degree C
 *
-* 			NOTE: 	This function is constrained to HW design. In this scenario
-* 					NTC is simply connected to pull-up resistor.
-*
-* @param[in]    ntc_v 			- Voltage drop across NTC resistor
+* @param[in]    rth 			- Resistance of NTC thermistor
 * @param[in]    beta 			- Beta factor of NTC
-* @param[in]    ntc_nominal_val - Nominal value of NTC, typ. @25 degC
-* @param[in]    pullup_val 		- Value of pull-up resistor
+* @param[in]    rth_nom         - Nominal value of NTC, typ. @25 degC
 * @return       temp 			- Calculated temperature
 */
 ////////////////////////////////////////////////////////////////////////////////
-static float32_t th_ntc_vol_convert_to_degC(const float32_t ntc_v, const float32_t beta, const float32_t ntc_nominal_val, const float32_t pullup_val)
+static float32_t th_calc_ntc_temperature(const float32_t rth, const float32_t beta, const float32_t rth_nom)
 {
-	float32_t temp;
-	float32_t ntc_r;
+    float32_t temp = 0.0f;
 
-    const float32_t vcc = adc_get_vref();
+    TH_ASSERT( rth_nom > 0.0f );
 
-	// Catch division by 0
-	// This also indicates that something is wrong with temperature sensor
-	if 	(	( vcc == ntc_v )
-		||	( 0.0f == ntc_nominal_val ))
-	{
-		ntc_r = 0;
+    // Calculate temperature
+    temp = (float32_t) (( 1.0f / (( 1.0f / 298.15f ) + (( 1.0f / beta ) * log( rth / rth_nom )))) - 273.15f );
 
-		// Set temperature to error value
-		// TODO: 
-		//temp = TEMPERATURE_ERROR_VALUE_DEG_CELSIUS;
-		temp = -1.0f;
-	}
-
-	// Input valid
-	else
-	{
-		// Calculate NTC resistance
-		ntc_r = (float32_t) (( pullup_val * ntc_v ) / ( vcc - ntc_v));
-
-		// Calculate temperature
-		temp = (float32_t) (( 1.0f / (( 1.0f / 298.15f ) + (( 1.0f / beta ) * log( ntc_r / ntc_nominal_val )))) - 273.15f );
-	}
-
-	return temp;
+    return temp;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Calculate temperature
+*
+* @param[in]    th      - Thermistor option
+* @return       temp    - Calculated temperature
+*/
+////////////////////////////////////////////////////////////////////////////////
+static float32_t th_calc_temperature(const th_opt_t th)
+{
+    float32_t temp = 0.0f;
 
+    // Calculate thermistor resistance
+    const float32_t rth = th_calc_resistance( th );
+
+    // Sensor type
+    switch( gp_cfg_table[th].type )
+    {
+        case eTH_TYPE_NTC:
+            temp = th_calc_ntc_temperature( th, gp_cfg_table[th].sensor.ntc.beta, gp_cfg_table[th].sensor.ntc.nom_val );
+            break;
+
+        case eTH_TYPE_PT1000:
+            // TODO: ...
+            temp = -1.0f;
+            break;
+
+        default:
+            TH_ASSERT( 0 );
+            break;
+    }
+
+    return temp;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Init filters
+*
+* @param[in]    th      - Thermistor option
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
+static th_status_t th_init_filter(const th_opt_t th)
+{
+    th_status_t status = eTH_OK;
+
+    #if ( 1 == THERMISTOR_FILTER_EN )
+
+        // Init LPF 
+        if ( eFILTER_OK != filter_rc_init( &g_th_data[th].lpf, gp_cfg_table[th].lpf_fc, TH_HNDL_FREQ_HZ, 1, g_th_data[th].temp ))
+        {
+            status = eTH_ERROR;
+        }
+
+    #endif
+
+    return status;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
@@ -282,7 +336,13 @@ static float32_t th_ntc_vol_convert_to_degC(const float32_t ntc_v, const float32
 */
 ////////////////////////////////////////////////////////////////////////////////
 
-
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Init thermistors
+*
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
 th_status_t th_init(void)
 {
 	th_status_t status	= eTH_OK;
@@ -296,36 +356,19 @@ th_status_t th_init(void)
         // Configuration table missing
 		if ( NULL != gp_cfg_table )
 		{
-            // Init all channels
-            for ( uint32_t ch = 0; ch < eTH_NUM_OF; ch++ )
+            // Init all thermistors
+            for ( uint32_t th = 0; th < eTH_NUM_OF; th++ )
             {
-                // Get current ADC value
-                th_volt = adc_get_real( gp_cfg_table[ch].adc_ch );
-
-                // Convert to degC
-                if ( eTH_TYPE_NTC == gp_cfg_table[ch].type )
+                // Get current temperature
+                g_th_data[th].temp = th_calc_temperature( th );
+                g_th_data[th].temp_filt = g_th_data[th].temp;
+                
+                // Init filter
+                if ( eTH_OK != th_init_filter( th ))
                 {
-                    g_th_data[ch].temp = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].sensor.ntc.beta, gp_cfg_table[ch].sensor.ntc.nom_val, gp_cfg_table[ch].pull_up );
+                    status = eTH_ERROR;
+                    break;
                 }
-                else
-                {
-                    g_th_data[ch].temp = -1.0f;
-                }
-
-                #if ( 1 == THERMISTOR_FILTER_EN )
-
-                    // Init LPF 
-                    if ( eFILTER_OK != filter_rc_init( &g_th_data[ch].lpf, gp_cfg_table[ch].lpf_fc, TH_HNDL_FREQ_HZ, 1, g_th_data[ch].temp ))
-                    {
-                        status = eTH_ERROR;
-                        break;
-                    }
-                    else
-                    {
-                        g_th_data[ch].temp_filt = g_th_data[ch].temp;
-                    }
-            
-                #endif
             }
         }
         else
@@ -343,7 +386,14 @@ th_status_t th_init(void)
 	return status;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Get initialization flag
+*
+* @param[out]   p_is_init   - Initialization flag
+* @return       status      - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
 th_status_t	th_is_init(bool * const p_is_init)
 {
 	th_status_t status = eTH_OK;
@@ -360,7 +410,13 @@ th_status_t	th_is_init(bool * const p_is_init)
 	return status;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Thermistor main handler
+*
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
 th_status_t th_hndl(void)
 {
 	th_status_t status	= eTH_OK;
@@ -370,24 +426,15 @@ th_status_t th_hndl(void)
 
 	if ( true == gb_is_init )
 	{
-		for ( uint32_t ch = 0; ch < eTH_NUM_OF; ch++ )
+        // Handle all thermistors
+		for ( uint32_t th = 0; th < eTH_NUM_OF; th++ )
 		{
-			// Get current ADC value
-			th_volt = adc_get_real( gp_cfg_table[ch].adc_ch );
-
-			// NTC type
-			if ( eTH_TYPE_NTC == gp_cfg_table[ch].type )
-			{
-				g_th_data[ch].temp = th_ntc_vol_convert_to_degC( th_volt, gp_cfg_table[ch].sensor.ntc.beta, gp_cfg_table[ch].sensor.ntc.nom_val, gp_cfg_table[ch].pull_up );
-			}
-			else
-			{
-				g_th_data[ch].temp = -1.0f;
-			}
+			// Get temperature
+            g_th_data[th].temp = th_calc_temperature( th );            
 
 			// Update filter
             #if ( 1 == THERMISTOR_FILTER_EN )
-                g_th_data[ch].temp_filt = filter_rc_update( g_th_data[ch].lpf, g_th_data[ch].temp );
+                g_th_data[th].temp_filt = filter_rc_update( g_th_data[th].lpf, g_th_data[th].temp );
             #endif
 		}
 	}

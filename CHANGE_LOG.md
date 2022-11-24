@@ -12,6 +12,7 @@ and this project/module adheres to [Semantic Versioning](https://semver.org/spec
 
 ### Todo
  - PT1000 calculations
+ - Status handling based on range (min, max)
  
  - Extensive measurement of NTC measurement:
     - NTC high side with single pull resistor
