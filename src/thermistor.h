@@ -47,7 +47,7 @@ typedef enum
 } th_status_t;
 
 /**
- *	Supported sensor types
+ *	Sensor types
  */
 typedef enum
 {
@@ -55,18 +55,48 @@ typedef enum
 	eTH_TYPE_PT1000			/**<PT1000 */
 } th_temp_type_t;
 
+/**
+ *  Sensor HW connection
+ *
+ *  @brief  Thermistor is either connected on high or low
+ *          side. High side means that thermistor is connected 
+ *          between positive rail and pull-down resistor. 
+ *          Low side means that thermistor is connected between
+ *          GND and pull-up resistor
+ */
+typedef enum
+{
+    eTH_HW_LOW_SIDE = 0,    /**<Thermistor layouted on low side */
+    eTH_HW_HIGH_SIDE,       /**<Thermistor layouted on high side */
+} th_hw_conn_t;
+
+/**
+ *  Pull resistor connections
+ */
+typedef enum
+{
+    eTH_HW_PULL_DOWN   = 0,    /**<Thermistor HW connected with pull-down resistor */
+    eTH_HW_PULL_UP,            /**<Thermistor HW connected with pull-up resistor */ 
+    eTH_HW_PULL_BOTH,          /**<Thermistor HW connected with both pull-up and pull-down resistor */
+} th_hw_pull_t;
 
 /**
  *	Thermistor configuration
  */
 typedef struct
 {	
+    adc_pins_t		adc_ch;			/**<ADC channel */	
+    th_hw_conn_t    hw_conn;        /**<Hardware configuration of thermisto connection */
+    th_hw_pull_t    hw_pull;        /**<Hardware configuration of pull resistor connection */
+    float32_t       pull_up;        /**<Resistance of pull-up resistor */
+    float32_t       pull_down;      /**<Resistance of pull-down resistor */
+    float32_t		lpf_fc;			/**<LPF cutoff frequency */
+    th_temp_type_t	type;			/**<Sensor type */
+    
+    // For NTC calc
 	float32_t		beta;			/**<NTC Beta factor */
 	float32_t		nom_val;		/**<Nominal value of NTC in Ohms */
-	float32_t		pull_up_val;	/**<Value of pull-up resisotr in Ohms */
-	float32_t		lpf_fc;			/**<LPF cutoff frequency */
-	th_temp_type_t	type;			/**<Sensor type */
-	adc_pins_t		adc_ch;			/**<ADC channel */	
+	
 
 } th_cfg_t;
 
