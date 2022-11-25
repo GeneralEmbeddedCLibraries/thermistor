@@ -162,7 +162,7 @@ static float32_t th_calc_res_single_pull(const th_opt_t th)
         } 
     }
     
-    // Unplusable voltage
+    // Unplausible voltage
     else
     {
         th_res = -1.0f;
@@ -235,7 +235,7 @@ static float32_t th_calc_res_both_pull(const th_opt_t th)
         } 
     }
     
-    // Unplusable voltage
+    // Unplausible voltage
     else
     {
         th_res = -1.0f;
