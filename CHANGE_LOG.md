@@ -13,6 +13,7 @@ and this project/module adheres to [Semantic Versioning](https://semver.org/spec
 - Status handling based on range (min, max)
     - Detection of short circuit
     - Detection of open circuit
+- Added excel table with PT100, PT1000 and PT500 calculations
 
 ### Todo
  - PT1000 calculations
