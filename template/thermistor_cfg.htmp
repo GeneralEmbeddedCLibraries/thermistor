@@ -67,7 +67,7 @@ typedef enum
 /**
  *  Enable/Disable usage of Filter module  
  */
-#define THERMISTOR_FILTER_EN                        ( 1 )
+#define TH_FILTER_EN                                ( 1 )
 
 /**
  *  Enable/Disable power supply ripple
@@ -77,9 +77,9 @@ typedef enum
  *
  *          When enabled ADC channel of power supply measurement needs to be provided!
  */
-#define THERMISTOR_SUPPLY_RIPPLE_COMP_EN            ( 1 )
+#define TH_SUPPLY_RIPPLE_COMP_EN                    ( 0 )
 
-#if ( 1 == THERMISTOR_SUPPLY_RIPPLE_COMP_EN )
+#if ( 1 == TH_SUPPLY_RIPPLE_COMP_EN )
 
     /**
      *  Power supply measurement ADC channel
@@ -87,7 +87,7 @@ typedef enum
      *  @note   When power supply ripple compensation algorithm is enabled
      *          ADC channel of power supply measurement needs to be provided!
      */
-    #define THERMISTOR_SUPPLY_ADC_CH                ( eADC_BAT )
+    #define TH_SUPPLY_ADC_CH                        ( eADC_BAT )
     
 #else
 
@@ -97,7 +97,7 @@ typedef enum
      *  @note   Power supply measurement is not supported! Provide nominal
      *          value of thermistor sensing supply voltage in volts.
      */
-    #define THERMISTOR_SUPPLY_V                     ( 2.70f )
+    #define TH_SUPPLY_V                             ( 2.70f )
 
 #endif
 

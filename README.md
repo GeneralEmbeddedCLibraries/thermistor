@@ -52,7 +52,7 @@ NTC thermistor based temperature measurement are calculated based on following f
 ![](doc/pic/ntc_calculation.png)
 
 
-And C implementation:
+C implementation for NTC calculation:
 ```C
 ////////////////////////////////////////////////////////////////////////////////
 /*!
@@ -83,26 +83,115 @@ PT100, PT500 and PT1000 thermistor based temperature measurement are calculated 
 
 ![](doc/pic/pt100_500_1000_value_graph.png)
 
-C implementation for PT100:
+C implementation for PT100 calculation:
 ```C
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Convert PT100 resistance to degree C
+*
+* @note     Calculation of PT100 according to 2nd order polynom aproximation.
+*           For futher details look at table: doc/pt1000_pt100_pt500_tables.xlsx 
+*
+*           Trendline function: T[°C] = -6E-05*Rth^2 + 0,3915*Rth + 100
+*
+* @param[in]    rth 			- Resistance of PT100 thermistor
+* @return       temp 			- Calculated temperature
+*/
+////////////////////////////////////////////////////////////////////////////////
+static float32_t th_calc_pt100_temperature(const float32_t rth)
+{
+            float32_t temp  = 0.0f;
+    const   float32_t a     = 100.0f;   // degC
+    const   float32_t b     = 0.3915f;  // degC^-1
+    const   float32_t c     = -6.0e-5f; // degC^-2
+
+    // Calculate temperature
+    temp = (float32_t) (( c * ( rth * rth )) + ( b * rth ) + a );
+    
+    return temp;
+}
 
 ```
 
-C implementation for PT500:
+C implementation for PT500 calculation:
 ```C
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Convert PT500 resistance to degree C
+*
+* @note     Calculation of PT500 according to 2nd order polynom aproximation.
+*           For futher details look at table: doc/pt1000_pt100_pt500_tables.xlsx 
+*
+*           Trendline function: T[°C] = -0,0003*Rth^2 + 1,9565*Rth + 500
+*
+* @param[in]    rth 			- Resistance of PT500 thermistor
+* @return       temp 			- Calculated temperature
+*/
+////////////////////////////////////////////////////////////////////////////////
+static float32_t th_calc_pt500_temperature(const float32_t rth)
+{
+            float32_t temp  = 0.0f;
+    const   float32_t a     = 500.0f;   // degC
+    const   float32_t b     = 1.9565f;  // degC^-1
+    const   float32_t c     = -0.0003f; // degC^-2
 
+    // Calculate temperature
+    temp = (float32_t) (( c * ( rth * rth )) + ( b * rth ) + a );
+    
+    return temp;
+}
 ```
 
-C implementation for PT1000:
+C implementation for PT1000 calculation:
 ```C
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Convert PT1000 resistance to degree C
+*
+* @note     Calculation of PT1000 according to 2nd order polynom aproximation.
+*           For futher details look at table: doc/pt1000_pt100_pt500_tables.xlsx 
+*
+*           Trendline function: T[°C] = -0,0006*Rth2 + 3,9145*Rth + 1000
+*
+* @param[in]    rth 			- Resistance of PT1000 thermistor
+* @return       temp 			- Calculated temperature
+*/
+////////////////////////////////////////////////////////////////////////////////
+static float32_t th_calc_pt1000_temperature(const float32_t rth)
+{
+            float32_t temp  = 0.0f;
+    const   float32_t a     = 1000.0f;  // degC
+    const   float32_t b     = 3.9145f;  // degC^-1
+    const   float32_t c     = -0.0006f; // degC^-2
 
-
+    // Calculate temperature
+    temp = (float32_t) (( c * ( rth * rth )) + ( b * rth ) + a );
+    
+    return temp;
+}
 ```
 
 ## **API**
 | API Functions | Description | Prototype |
 | --- | ----------- | ----- |
 | **th_init** | Initialization of thermistor module | th_status_t th_init(void) |
+| **th_is_init** | Get initialization flag | th_status_t th_is_init(bool * const p_is_init) |
+| **th_hndl** | Thermistor handler | th_status_t th_hndl(void) |
+| **th_get_degC** | Get un-filtered temperature in degrees C | th_status_t th_get_degC(const th_opt_t th, float32_t * const p_temp) |
+| **th_get_degF** | Get un-filtered temperature in degrees F | th_status_t th_get_degF(const th_opt_t th, float32_t * const p_temp) |
+| **th_get_kelvin** | Get un-filtered temperature in kelvin | th_status_t th_get_kelvin(const th_opt_t th, float32_t * const p_temp) |
+| **th_get_resistance** | Get thermistor resistance | th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res) |
+| **th_get_status** | Get thermistor status | th_status_t th_get_status(const th_opt_t th) |
+
+If filter is enabled (*TH_FILTER_EN* = 1) then following API is also available:
+| API Functions | Description | Prototype |
+| --- | ----------- | ----- |
+| **th_get_degC_filt** | Get LPF filtered temperature in degrees C | th_status_t th_get_degC_filt(const th_opt_t th, float32_t * const p_temp) | 
+| **th_get_degF_filt** | Get LPF filtered temperature in degrees F | th_status_t th_get_degF_filt(const th_opt_t th, float32_t * const p_temp) | 
+| **th_get_kelvin_filt** | Get LPF filtered temperature in kelvin | th_status_t th_get_kelvin_filt(const th_opt_t th, float32_t * const p_temp) | 
+| **th_set_lpf_fc** | Change LPF cutoff frequency | th_status_t th_set_lpf_fc(const th_opt_t th, const float32_t fc) | 
+| **th_get_lpf_fc** | Get LPF cutoff frequency | th_status_t th_get_lpf_fc(const th_opt_t th, float32_t * const p_fc) | 
+
 
 
 ## **Usage**
@@ -115,7 +204,8 @@ C implementation for PT1000:
 
 | Configuration | Description |
 | --- | --- |
-| **TH_HNDL_PERIOD_S** 			| Period of main thermistor handler in seconds. |
+| **TH_HNDL_PERIOD_S** | Period of main thermistor handler in seconds. |
+| **TH_FILTER_EN** | Enable/Disable usage of filter module. |
 
 
 3. List all used thermistors inside *thermistor_cfg.h*:

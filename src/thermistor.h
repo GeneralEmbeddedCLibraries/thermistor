@@ -144,7 +144,7 @@ th_status_t th_get_kelvin		(const th_opt_t th, float32_t * const p_temp);
 th_status_t th_get_resistance   (const th_opt_t th, float32_t * const p_res);
 th_status_t th_get_status       (const th_opt_t th);
 
-#if ( 1 == THERMISTOR_FILTER_EN )
+#if ( 1 == TH_FILTER_EN )
     th_status_t th_get_degC_filt	(const th_opt_t th, float32_t * const p_temp);
     th_status_t th_get_degF_filt	(const th_opt_t th, float32_t * const p_temp);
     th_status_t th_get_kelvin_filt	(const th_opt_t th, float32_t * const p_temp);

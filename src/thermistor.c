@@ -27,7 +27,7 @@
 #include "thermistor.h"
 
 // Filer module
-#if ( 1 == THERMISTOR_FILTER_EN )
+#if ( 1 == TH_FILTER_EN )
     #include "middleware/filter/src/filter.h"
 #endif
 
@@ -56,7 +56,7 @@ typedef struct
 	float32_t   	temp;               /**<Temperature values in degC */
 	float32_t   	temp_filt;          /**<Filtered temperature values in degC */
 
-    #if ( 1 == THERMISTOR_FILTER_EN )
+    #if ( 1 == TH_FILTER_EN )
         p_filter_rc_t	lpf;			/**<Low pass filter */
     #endif
 
@@ -117,10 +117,10 @@ static float32_t th_get_vcc(void)
 {
     float32_t vcc = 0.0f;
 
-    #if ( 1 == THERMISTOR_SUPPLY_RIPPLE_COMP_EN )
-        vcc = adc_get_real( THERMISTOR_SUPPLY_ADC_CH );
+    #if ( 1 == TH_SUPPLY_RIPPLE_COMP_EN )
+        vcc = adc_get_real( TH_SUPPLY_ADC_CH );
     #else
-        vcc = (float32_t) ( THERMISTOR_SUPPLY_V );
+        vcc = (float32_t) ( TH_SUPPLY_V );
     #endif
 
     return vcc;
@@ -430,7 +430,7 @@ static th_status_t th_init_filter(const th_opt_t th)
 {
     th_status_t status = eTH_OK;
 
-    #if ( 1 == THERMISTOR_FILTER_EN )
+    #if ( 1 == TH_FILTER_EN )
 
         // Init LPF 
         if ( eFILTER_OK != filter_rc_init( &g_th_data[th].lpf, gp_cfg_table[th].lpf_fc, TH_HNDL_FREQ_HZ, 1, g_th_data[th].temp ))
@@ -629,7 +629,7 @@ th_status_t th_hndl(void)
             g_th_data[th].temp = th_calc_temperature( th );            
 
 			// Update filter
-            #if ( 1 == THERMISTOR_FILTER_EN )
+            #if ( 1 == TH_FILTER_EN )
                 g_th_data[th].temp_filt = filter_rc_update( g_th_data[th].lpf, g_th_data[th].temp );
             #else
                 g_th_data[th].temp_filt = g_th_data[th].temp;
@@ -801,7 +801,7 @@ th_status_t th_get_status(const th_opt_t th)
     return status;    
 }
 
-#if ( 1 == THERMISTOR_FILTER_EN )
+#if ( 1 == TH_FILTER_EN )
 
     ////////////////////////////////////////////////////////////////////////////////
     /*!
