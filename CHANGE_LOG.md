@@ -8,11 +8,14 @@ and this project/module adheres to [Semantic Versioning](https://semver.org/spec
 ## V1.0.0 - dd.mm.yyyy
 
 ### Added
-- Implemented NTC calculations with various HW configuration
+- Measurement of NTC with various HW configuration
+- Power supply (Vcc) ripple compensation algorithm
+- Status handling based on range (min, max)
+    - Detection of short circuit
+    - Detection of open circuit
 
 ### Todo
  - PT1000 calculations
- - Status handling based on range (min, max)
  
  - Extensive measurement of NTC measurement:
     - NTC high side with single pull resistor

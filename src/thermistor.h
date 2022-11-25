@@ -61,7 +61,9 @@ typedef enum
 typedef enum
 {
 	eTH_TYPE_NTC = 0,		/**<NTC thermistor */
-	eTH_TYPE_PT1000			/**<PT1000 */
+	eTH_TYPE_PT1000,		/**<PT1000 */
+	eTH_TYPE_PT100,			/**<PT100 */
+	eTH_TYPE_PT500			/**<PT500 */
 } th_temp_type_t;
 
 /**
@@ -115,6 +117,7 @@ typedef struct
         /**<PT1000 */
         struct
         {
+            // TBD: needs to be defined what PT1000 needs...
             float32_t nom_val;
         } pt1000;
 

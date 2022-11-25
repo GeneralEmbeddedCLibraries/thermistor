@@ -25,6 +25,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "drivers/peripheral/adc/adc.h"
+
 
 // USER CODE BEGIN...
 
@@ -48,7 +50,7 @@ typedef enum
 	
 	eTH_NTC_INT = 0,
 	eTH_NTC_COMP,
-	eTH_PTC_AUX,
+	//eTH_PTC_AUX,
 
 	// USER CODE END...
 
@@ -60,19 +62,51 @@ typedef enum
  *
  * 	Unit: sec
  */
-#define TH_HNDL_PERIOD_S                    ( 0.01f )
+#define TH_HNDL_PERIOD_S                            ( 0.01f )
 
 /**
  *  Enable/Disable usage of Filter module  
  */
-#define THERMISTOR_FILTER_EN                ( 1 )
+#define THERMISTOR_FILTER_EN                        ( 1 )
+
+/**
+ *  Enable/Disable power supply ripple
+ *
+ *  @note   Enabling power supply ripple compensation algorithm demands in first hand
+ *          to measure power supply potencial!
+ *
+ *          When enabled ADC channel of power supply measurement needs to be provided!
+ */
+#define THERMISTOR_SUPPLY_RIPPLE_COMP_EN            ( 1 )
+
+#if ( 1 == THERMISTOR_SUPPLY_RIPPLE_COMP_EN )
+
+    /**
+     *  Power supply measurement ADC channel
+     *
+     *  @note   When power supply ripple compensation algorithm is enabled
+     *          ADC channel of power supply measurement needs to be provided!
+     */
+    #define THERMISTOR_SUPPLY_ADC_CH                ( eADC_BAT )
+    
+#else
+
+    /**
+     *  Power supply voltage
+     *
+     *  @note   Power supply measurement is not supported! Provide nominal
+     *          value of thermistor sensing supply voltage in volts.
+     */
+    #define THERMISTOR_SUPPLY_V                     ( 2.70f )
+
+#endif
 
 /**
  * 	Enable/Disable debug mode
  *
  * 	@note	Disable in release!
  */
-#define TH_DEBUG_EN                         ( 1 )
+#define TH_DEBUG_EN                                 ( 1 )
 
 #ifndef DEBUG
     #undef TH_DEBUG_EN
@@ -84,7 +118,7 @@ typedef enum
  *
  * 	@note	Disable in release!
  */
-#define TH_ASSERT_EN                        ( 1 )
+#define TH_ASSERT_EN                                ( 1 )
 
 #ifndef DEBUG
     #undef TH_DEBUG_EN
@@ -95,18 +129,18 @@ typedef enum
  * 	Debug communication port macros
  */
 #if ( 1 == TH_DEBUG_EN )
-	#define TH_DBG_PRINT( ... )             ( cli_printf( __VA_ARGS__ ))
+	#define TH_DBG_PRINT( ... )                     ( cli_printf( __VA_ARGS__ ))
 #else
-	#define TH_DBG_PRINT( ... )             { ; }
+	#define TH_DBG_PRINT( ... )                     { ; }
 #endif
 
 /**
  * 	 Assertion macros
  */
  #if ( TH_ASSERT_EN )
-	#define TH_ASSERT(x)                    { PROJECT_CONFIG_ASSERT(x) }
+	#define TH_ASSERT(x)                            { PROJECT_CONFIG_ASSERT(x) }
  #else
-  #define TH_ASSERT(x)                        { ; }
+  #define TH_ASSERT(x)                              { ; }
  #endif
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -85,6 +85,7 @@ static th_data_t g_th_data[eTH_NUM_OF] = {0};
 ////////////////////////////////////////////////////////////////////////////////
 // Function Prototypes
 ////////////////////////////////////////////////////////////////////////////////
+static float32_t    th_get_vcc                  (void);
 static float32_t    th_calc_res_single_pull     (const th_opt_t th);
 static float32_t    th_calc_res_both_pull       (const th_opt_t th);
 static float32_t    th_calc_resistance          (const th_opt_t th);
@@ -96,6 +97,32 @@ static th_status_t  th_status_hndl              (const th_opt_t th, const float3
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Get thermistor power supply (VCC) potencial
+*
+* @note     Based on "THERMISTOR_SUPPLY_RIPPLE_COMP_EN" macro definition function 
+*           returns:
+*               
+*               ENABLE  - Measured power supply voltage in V
+*               DISABLE - Constant value of macro "THERMISTOR_SUPPLY_V"
+*
+* @return       res     - Resistance of thermistor
+*/
+////////////////////////////////////////////////////////////////////////////////
+static float32_t th_get_vcc(void)
+{
+    float32_t vcc = 0.0f;
+
+    #if ( 1 == THERMISTOR_SUPPLY_RIPPLE_COMP_EN )
+        vcc = adc_get_real( THERMISTOR_SUPPLY_ADC_CH );
+    #else
+        vcc = (float32_t) ( THERMISTOR_SUPPLY_V );
+    #endif
+
+    return vcc;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
@@ -114,8 +141,8 @@ static float32_t th_calc_res_single_pull(const th_opt_t th)
     // Get thermistor voltage
     const float32_t vth = adc_get_real( gp_cfg_table[th].adc_ch );
 
-    // Get ADC reference voltage
-    const float32_t vcc = adc_get_vref();
+    // Get VCC voltage
+    const float32_t vcc = th_get_vcc();
     
     // Check for valid voltage ranges
     if (( vth < vcc ) && ( vth >= 0.0f ))
@@ -161,8 +188,8 @@ static float32_t th_calc_res_both_pull(const th_opt_t th)
     // Get thermistor voltage
     const float32_t vth = adc_get_real( gp_cfg_table[th].adc_ch );
 
-    // Get ADC reference voltage
-    const float32_t vcc = adc_get_vref();
+    // Get VCC voltage
+    const float32_t vcc = th_get_vcc();
     
     // Check for valid voltage ranges
     if (( vth < vcc ) && ( vth >= 0.0f ))
@@ -292,6 +319,8 @@ static float32_t th_calc_temperature(const th_opt_t th)
             break;
 
         case eTH_TYPE_PT1000:
+        case eTH_TYPE_PT100:
+        case eTH_TYPE_PT500:
             // TODO: ...
             temp = -1.0f;
             break;
@@ -360,6 +389,8 @@ static th_status_t th_status_hndl(const th_opt_t th, const float32_t temp)
                     break;
 
                 case eTH_TYPE_PT1000:
+                case eTH_TYPE_PT100:
+                case eTH_TYPE_PT500:
                     status = eTH_ERROR_OPEN;
                     break;
 
@@ -380,6 +411,8 @@ static th_status_t th_status_hndl(const th_opt_t th, const float32_t temp)
                     break;
 
                 case eTH_TYPE_PT1000:
+                case eTH_TYPE_PT100:
+                case eTH_TYPE_PT500:
                     status = eTH_ERROR_SHORT;
                     break;
 
@@ -682,7 +715,6 @@ th_status_t th_get_status(const th_opt_t th)
 
     return status;    
 }
-
 
 #if ( 1 == THERMISTOR_FILTER_EN )
 
