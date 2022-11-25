@@ -206,7 +206,13 @@ If filter is enabled (*TH_FILTER_EN* = 1) then following API is also available:
 | --- | --- |
 | **TH_HNDL_PERIOD_S** | Period of main thermistor handler in seconds. |
 | **TH_FILTER_EN** | Enable/Disable usage of filter module. |
-
+| **TH_SUPPLY_RIPPLE_COMP_EN** | Enable/Disable power supply ripple. |
+| **TH_SUPPLY_ADC_CH** | Power supply measurement ADC channel. |
+| **TH_SUPPLY_V** | Power supply voltage of thermistor sensing circuit. |
+| **TH_DEBUG_EN** | Enable/Disable debugging mode. |
+| **TH_ASSERT_EN** | Enable/Disable asserts. Shall be disabled in release build! |
+| **TH_DBG_PRINT** | Definition of debug print. |
+| **TH_ASSERT** | Definition of assert. |
 
 3. List all used thermistors inside *thermistor_cfg.h*:
 ```C
@@ -229,7 +235,84 @@ typedef enum
 
 4. Setup thermistor configurations inside *thermistor_cfg.c*:
 
+```C
+/**
+ *      Thermistor configuration table
+ *  
+ *  @note   Following condition must be taken into account:
+ *              
+ *              1. lpf_fc > 0
+ *              2. Valid HW configuration are: 
+ *                  - eTH_HW_LOW_SIDE  with eTH_HW_PULL_UP
+ *                  - eTH_HW_HIGH_SIDE with eTH_HW_PULL_DOWN
+ *                  - eTH_HW_LOW_SIDE  with eTH_HW_PULL_BOTH
+ *                  - eTH_HW_HIGH_SIDE with eTH_HW_PULL_BOTH
+ *              3. Range: Max is larger that min value
+ */
+static const th_cfg_t g_th_cfg[eTH_NUM_OF] = 
+{
+    // USER CODE BEGIN...
 
+	// NTC Configurations
+	// ----------------------------------------------------------------------------------------------
+
+    [eTH_NTC_INT]	= 
+    {   
+        .adc_ch             = eADC_TEMP_INT,    
+        .hw_conn            = eTH_HW_LOW_SIDE, 
+        .hw_pull            = eTH_HW_PULL_UP, 
+        .pull_up            = 11e3f, 
+        .pull_down          = 0, 
+        .lpf_fc             = 1.0f,    
+        .type               = eTH_TYPE_NTC, 
+        .sensor.ntc.beta    = 3380.0f,
+        .sensor.ntc.nom_val = 10e3f,
+        .range.min          = -25.0f,
+        .range.max          = 150.0f,
+        .err_type           = eTH_ERR_FLOATING,
+    },
+
+    [eTH_NTC_COMP]	= 
+    {   
+        .adc_ch             = eADC_TEMP_COMP,    
+        .hw_conn            = eTH_HW_LOW_SIDE, 
+        .hw_pull            = eTH_HW_PULL_UP, 
+        .pull_up            = 11e3f, 
+        .pull_down          = 0, 
+        .lpf_fc             = 1.0f,    
+        .type               = eTH_TYPE_NTC, 
+        .sensor.ntc.beta    = 3380.0f,
+        .sensor.ntc.nom_val = 10e3f,
+        .range.min          = -25.0f,
+        .range.max          = 150.0f,
+        .err_type           = eTH_ERR_FLOATING,
+    },
+
+    // ----------------------------------------------------------------------------------------------
+
+
+	// PT1000 Configurations
+	// ----------------------------------------------------------------------------------------------
+
+    [eTH_PTC_AUX]	= 
+    {   
+        .adc_ch             = eADC_TEMP_AUX,    
+        .hw_conn            = eTH_HW_LOW_SIDE, 
+        .hw_pull            = eTH_HW_PULL_UP, 
+        .pull_up            = 11e3f, 
+        .pull_down          = 0, 
+        .lpf_fc             = 1.0f,    
+        .type               = eTH_TYPE_PT1000, 
+        .range.min          = -25.0f,
+        .range.max          = 150.0f,
+        .err_type           = eTH_ERR_FLOATING,
+    },
+
+    // ----------------------------------------------------------------------------------------------
+
+    // USER CODE END...
+};
+```
 
 For hardware related configuration (*hw_conn* and *hw_pull*) help with picture above.
 

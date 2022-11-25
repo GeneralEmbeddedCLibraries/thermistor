@@ -37,14 +37,23 @@
 
 /**
  *      Thermistor configuration table
+ *  
+ *  @note   Following condition must be taken into account:
+ *              
+ *              1. lpf_fc > 0
+ *              2. Valid HW configuration are: 
+ *                  - eTH_HW_LOW_SIDE  with eTH_HW_PULL_UP
+ *                  - eTH_HW_HIGH_SIDE with eTH_HW_PULL_DOWN
+ *                  - eTH_HW_LOW_SIDE  with eTH_HW_PULL_BOTH
+ *                  - eTH_HW_HIGH_SIDE with eTH_HW_PULL_BOTH
+ *              3. Range: Max is larger that min value
  */
 static const th_cfg_t g_th_cfg[eTH_NUM_OF] = 
 {
+    // USER CODE BEGIN...
+
 	// NTC Configurations
 	// ----------------------------------------------------------------------------------------------
-	// ----------------------------------------------------------------------------------------------
-	
-    // USER CODE BEGIN...
 
     [eTH_NTC_INT]	= 
     {   
@@ -78,13 +87,27 @@ static const th_cfg_t g_th_cfg[eTH_NUM_OF] =
         .err_type           = eTH_ERR_FLOATING,
     },
 
+    // ----------------------------------------------------------------------------------------------
 
 
 	// PT1000 Configurations
 	// ----------------------------------------------------------------------------------------------
-	// ----------------------------------------------------------------------------------------------
-	//[eTH_PTC_AUX]	= { .adc_ch = eADC_TEMP_AUX,	.type = eTH_TYPE_PT1000, .lpf_fc = 1.0f,	.beta = 0.0f		},
 
+    [eTH_PTC_AUX]	= 
+    {   
+        .adc_ch             = eADC_TEMP_AUX,    
+        .hw_conn            = eTH_HW_LOW_SIDE, 
+        .hw_pull            = eTH_HW_PULL_UP, 
+        .pull_up            = 11e3f, 
+        .pull_down          = 0, 
+        .lpf_fc             = 1.0f,    
+        .type               = eTH_TYPE_PT1000, 
+        .range.min          = -25.0f,
+        .range.max          = 150.0f,
+        .err_type           = eTH_ERR_FLOATING,
+    },
+
+    // ----------------------------------------------------------------------------------------------
 
     // USER CODE END...
 };

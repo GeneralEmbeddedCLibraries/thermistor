@@ -50,7 +50,7 @@ typedef enum
 	
 	eTH_NTC_INT = 0,
 	eTH_NTC_COMP,
-	//eTH_PTC_AUX,
+	eTH_PTC_AUX,
 
 	// USER CODE END...
 
@@ -92,7 +92,7 @@ typedef enum
 #else
 
     /**
-     *  Power supply voltage
+     *  Power supply voltage of thermistor sensing circuit
      *
      *  @note   Power supply measurement is not supported! Provide nominal
      *          value of thermistor sensing supply voltage in volts.

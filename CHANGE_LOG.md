@@ -8,15 +8,19 @@ and this project/module adheres to [Semantic Versioning](https://semver.org/spec
 ## V1.0.0 - dd.mm.yyyy
 
 ### Added
-- Measurement of NTC with various HW configuration
+- Measurement and conversion of NTC with various HW configuration
 - Power supply (Vcc) ripple compensation algorithm
 - Status handling based on range (min, max)
     - Detection of short circuit
     - Detection of open circuit
-- Added excel table with PT100, PT1000 and PT500 calculations
+- Added excel table with PT100, PT500 and PT1000 calculations
+- Measurement and conversion of PT100, PT500 and PT1000 with various HW configuration
 
 ### Todo
- - PT1000 calculations
+
+ - Configuration table check
+    - lpf_fc != 0
+    - pull connection mismatched...
  
  - Extensive measurement of NTC measurement:
     - NTC high side with single pull resistor
