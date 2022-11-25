@@ -81,7 +81,7 @@ static float32_t th_calc_ntc_temperature(const float32_t rth, const float32_t be
 
 PT100, PT500 and PT1000 thermistor based temperature measurement are calculated based on [PT Calculation Tabel](doc/pt1000_pt100_pt500_tables.xlsx). Picture below shows temperature characteristics of all three PT types with an 2nd order polynomial approximation curve:
 
-![](doc/pic/pt_value_graph.png)
+![](doc/pic/pt100_500_1000_value_graph.png)
 
 C implementation for PT100:
 ```C
