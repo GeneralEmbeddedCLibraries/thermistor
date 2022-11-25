@@ -90,9 +90,11 @@ static float32_t    th_calc_res_single_pull     (const th_opt_t th);
 static float32_t    th_calc_res_both_pull       (const th_opt_t th);
 static float32_t    th_calc_resistance          (const th_opt_t th);
 static float32_t    th_calc_ntc_temperature     (const float32_t rth, const float32_t beta, const float32_t rth_nom);
+static float32_t    th_calc_pt100_temperature   (const float32_t rth);
+static float32_t    th_calc_pt500_temperature   (const float32_t rth);
+static float32_t    th_calc_pt1000_temperature  (const float32_t rth);
 static th_status_t  th_init_filter              (const th_opt_t th);
 static th_status_t  th_status_hndl              (const th_opt_t th, const float32_t temp);
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -298,6 +300,84 @@ static float32_t th_calc_ntc_temperature(const float32_t rth, const float32_t be
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
+* @brief        Convert PT100 resistance to degree C
+*
+* @note     Calculation of PT100 according to 2nd order polynom aproximation.
+*           For futher details look at table: doc/pt1000_pt100_pt500_tables.xlsx 
+*
+*           Trendline function: T[°C] = -6E-05*Rth^2 + 0,3915*Rth + 100
+*
+* @param[in]    rth 			- Resistance of PT100 thermistor
+* @return       temp 			- Calculated temperature
+*/
+////////////////////////////////////////////////////////////////////////////////
+static float32_t th_calc_pt100_temperature(const float32_t rth)
+{
+            float32_t temp  = 0.0f;
+    const   float32_t a     = 100.0f;   // degC
+    const   float32_t b     = 0.3915f;  // degC^-1
+    const   float32_t c     = -6.0e-5f; // degC^-2
+
+    // Calculate temperature
+    temp = (float32_t) (( c * ( rth * rth )) + ( b * rth ) + a );
+    
+    return temp;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Convert PT500 resistance to degree C
+*
+* @note     Calculation of PT500 according to 2nd order polynom aproximation.
+*           For futher details look at table: doc/pt1000_pt100_pt500_tables.xlsx 
+*
+*           Trendline function: T[°C] = -0,0003*Rth^2 + 1,9565*Rth + 500
+*
+* @param[in]    rth 			- Resistance of PT500 thermistor
+* @return       temp 			- Calculated temperature
+*/
+////////////////////////////////////////////////////////////////////////////////
+static float32_t th_calc_pt500_temperature(const float32_t rth)
+{
+            float32_t temp  = 0.0f;
+    const   float32_t a     = 500.0f;   // degC
+    const   float32_t b     = 1.9565f;  // degC^-1
+    const   float32_t c     = -0.0003f; // degC^-2
+
+    // Calculate temperature
+    temp = (float32_t) (( c * ( rth * rth )) + ( b * rth ) + a );
+    
+    return temp;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Convert PT1000 resistance to degree C
+*
+* @note     Calculation of PT1000 according to 2nd order polynom aproximation.
+*           For futher details look at table: doc/pt1000_pt100_pt500_tables.xlsx 
+*
+*           Trendline function: T[°C] = -0,0006*Rth2 + 3,9145*Rth + 1000
+*
+* @param[in]    rth 			- Resistance of PT1000 thermistor
+* @return       temp 			- Calculated temperature
+*/
+////////////////////////////////////////////////////////////////////////////////
+static float32_t th_calc_pt1000_temperature(const float32_t rth)
+{
+            float32_t temp  = 0.0f;
+    const   float32_t a     = 1000.0f;  // degC
+    const   float32_t b     = 3.9145f;  // degC^-1
+    const   float32_t c     = -0.0006f; // degC^-2
+
+    // Calculate temperature
+    temp = (float32_t) (( c * ( rth * rth )) + ( b * rth ) + a );
+    
+    return temp;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
 * @brief        Calculate temperature
 *
 * @param[in]    th      - Thermistor option
@@ -319,10 +399,15 @@ static float32_t th_calc_temperature(const th_opt_t th)
             break;
 
         case eTH_TYPE_PT1000:
+            temp = th_calc_pt1000_temperature( g_th_data[th].res );
+            break;
+
         case eTH_TYPE_PT100:
+            temp = th_calc_pt100_temperature( g_th_data[th].res );
+            break;
+
         case eTH_TYPE_PT500:
-            // TODO: ...
-            temp = -1.0f;
+            temp = th_calc_pt500_temperature( g_th_data[th].res );
             break;
 
         default:

@@ -114,13 +114,6 @@ typedef struct
             float32_t nom_val;      /**<Nominal value of NTC @25degC in Ohms */
         } ntc;
 
-        /**<PT1000 */
-        struct
-        {
-            // TBD: needs to be defined what PT1000 needs...
-            float32_t nom_val;
-        } pt1000;
-
     } sensor;
 
     /**<Valid range */
