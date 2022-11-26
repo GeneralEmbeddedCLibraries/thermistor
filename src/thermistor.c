@@ -48,6 +48,34 @@
 #define TH_NTC_25DEG_FACTOR             ((float32_t) ( 1.0 / 298.15 ))      // Leave double
 
 /**
+ *	PT100/500/1000 temperature calculation factors according
+ *	to DIN EN60751 standard
+ */
+#define TH_PT_DIN_EN60751_A		( 3.9083e-3 )	// degC^-1
+#define TH_PT_DIN_EN60751_B		( -5.775e-7 )	// degC^-2
+
+/**
+ *		Precalculated factors for PT100/500/1000 calculations
+ */
+#define TH_PT_DIN_EN60751_AA	(( float32_t )( TH_PT_DIN_EN60751_A * TH_PT_DIN_EN60751_A ))
+#define TH_PT_DIN_EN60751_2B	(( float32_t )( 2.0 * TH_PT_DIN_EN60751_B ))
+#define TH_PT_DIN_EN60751_4B	(( float32_t )( 4.0 * TH_PT_DIN_EN60751_B ))
+
+/**
+ *		PT100/500/1000 Resistance Limits
+ *
+ * @note Taken from "doc/pt1000_pt100_pt500_tables.xlsx" table!
+ *
+ *	Unit: Ohm
+ */
+#define TH_PT1000_MAX_OHM		( 3904.81f )
+#define TH_PT1000_MIN_OHM		( 185.20f )
+#define TH_PT100_MAX_OHM		( 390.48f )
+#define TH_PT100_MIN_OHM		( 18.52ff )
+#define TH_PT500_MAX_OHM		( 1937.74f )
+#define TH_PT500_MIN_OHM		( 114.13f )
+
+/**
  *  Thermistor data
  */
 typedef struct
@@ -95,6 +123,8 @@ static float32_t    th_calc_pt500_temperature   (const float32_t rth);
 static float32_t    th_calc_pt1000_temperature  (const float32_t rth);
 static th_status_t  th_init_filter              (const th_opt_t th);
 static th_status_t  th_status_hndl              (const th_opt_t th, const float32_t temp);
+
+static inline float32_t th_limit_f32			(const float32_t in, const float32_t min, const float32_t max);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -354,37 +384,22 @@ static float32_t th_calc_pt500_temperature(const float32_t rth)
 /*!
 * @brief        Convert PT1000 resistance to degree C
 *
-* @note     Calculation of PT1000 according to 2nd order polynom aproximation.
+* @note     Calculation of PT1000 according to DIN EN60751 standard.
 *           For futher details look at table: doc/pt1000_pt100_pt500_tables.xlsx 
-*
-*           Trendline function: T[°C] = -0,0006*Rth2 + 3,9145*Rth + 1000
 *
 * @param[in]    rth 			- Resistance of PT1000 thermistor
 * @return       temp 			- Calculated temperature
 */
 ////////////////////////////////////////////////////////////////////////////////
-
-#define TH_PT_DIN_EN60751_A		( 3.9083e-3 )
-#define TH_PT_DIN_EN60751_B		( -5.775e-7 )
-
-#define TH_PT_DIN_EN60751_AA	(( float32_t )( TH_PT_DIN_EN60751_A * TH_PT_DIN_EN60751_A ))
-#define TH_PT_DIN_EN60751_2B	(( float32_t )( 2.0 * TH_PT_DIN_EN60751_B ))
-#define TH_PT_DIN_EN60751_4B	(( float32_t )( 4.0 * TH_PT_DIN_EN60751_B ))
-
 static float32_t th_calc_pt1000_temperature(const float32_t rth)
 {
-            float32_t temp  = 0.0f;
+	float32_t temp  = 0.0f;
 
-/*
-    const   float32_t a     = -241.721082f;  // degC
-    const   float32_t b     = 0.227024;  // degC^-1
-    const   float32_t c     = 1.322689e-5f; // degC^-2
+	// Limit termistor resistance
+	const float32_t rth_lim = th_limit_f32( rth, TH_PT1000_MIN_OHM, TH_PT1000_MAX_OHM );
 
-    // Calculate temperature
-    temp = (float32_t) (( c * ( rth * rth )) + ( b * rth ) + a );
-  */
-
-	temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth / 1000.0f ))) / TH_PT_DIN_EN60751_2B );
+	// Calculate temperature
+	temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth_lim / 1000.0f ))) / TH_PT_DIN_EN60751_2B );
     
     return temp;
 }
@@ -528,6 +543,36 @@ static th_status_t th_status_hndl(const th_opt_t th, const float32_t temp)
     }
 
     return status;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Limit floating point value
+*
+* @param[in]    in	- Input value to limit
+* @param[in]    min	- Minimum value limit
+* @param[in]    max	- Maximum value 
+* @return       out	- Limited output value
+*/
+////////////////////////////////////////////////////////////////////////////////
+static inline float32_t th_limit_f32(const float32_t in, const float32_t min, const float32_t max)
+{
+	float32_t out = in;
+	
+	if ( in > max )
+	{
+		out = max;
+	}
+	else if ( in < min )
+	{
+		out = min;
+	}
+	else
+	{
+		out = in;
+	}
+
+	return out;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
