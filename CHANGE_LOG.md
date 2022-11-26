@@ -15,6 +15,7 @@ and this project/module adheres to [Semantic Versioning](https://semver.org/spec
     - Detection of open circuit
 - Added excel table with PT100, PT500 and PT1000 calculations
 - Measurement and conversion of PT100, PT500 and PT1000 with various HW configuration
+   - Software for PT calculations were tested with SIKA simulator
 
 ### Todo
 
