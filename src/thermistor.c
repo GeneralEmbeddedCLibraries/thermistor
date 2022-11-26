@@ -71,7 +71,7 @@
 #define TH_PT1000_MAX_OHM		( 3904.81f )
 #define TH_PT1000_MIN_OHM		( 185.20f )
 #define TH_PT100_MAX_OHM		( 390.48f )
-#define TH_PT100_MIN_OHM		( 18.52ff )
+#define TH_PT100_MIN_OHM		( 18.52f )
 #define TH_PT500_MAX_OHM		( 1937.74f )
 #define TH_PT500_MIN_OHM		( 114.13f )
 
@@ -332,10 +332,8 @@ static float32_t th_calc_ntc_temperature(const float32_t rth, const float32_t be
 /*!
 * @brief        Convert PT100 resistance to degree C
 *
-* @note     Calculation of PT100 according to 2nd order polynom aproximation.
+* @note     Calculation of PT500 according to DIN EN60751 standard.
 *           For futher details look at table: doc/pt1000_pt100_pt500_tables.xlsx 
-*
-*           Trendline function: T[°C] = -6E-05*Rth^2 + 0,3915*Rth + 100
 *
 * @param[in]    rth 			- Resistance of PT100 thermistor
 * @return       temp 			- Calculated temperature
@@ -343,13 +341,13 @@ static float32_t th_calc_ntc_temperature(const float32_t rth, const float32_t be
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_pt100_temperature(const float32_t rth)
 {
-            float32_t temp  = 0.0f;
-    const   float32_t a     = 100.0f;   // degC
-    const   float32_t b     = 0.3915f;  // degC^-1
-    const   float32_t c     = -6.0e-5f; // degC^-2
+	float32_t temp  = 0.0f;
 
-    // Calculate temperature
-    temp = (float32_t) (( c * ( rth * rth )) + ( b * rth ) + a );
+	// Limit termistor resistance
+	const float32_t rth_lim = th_limit_f32( rth, TH_PT100_MIN_OHM, TH_PT100_MAX_OHM );
+
+	// Calculate temperature
+	temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth_lim / 100.0f ))) / TH_PT_DIN_EN60751_2B );
     
     return temp;
 }
@@ -358,10 +356,8 @@ static float32_t th_calc_pt100_temperature(const float32_t rth)
 /*!
 * @brief        Convert PT500 resistance to degree C
 *
-* @note     Calculation of PT500 according to 2nd order polynom aproximation.
+* @note     Calculation of PT500 according to DIN EN60751 standard.
 *           For futher details look at table: doc/pt1000_pt100_pt500_tables.xlsx 
-*
-*           Trendline function: T[°C] = -0,0003*Rth^2 + 1,9565*Rth + 500
 *
 * @param[in]    rth 			- Resistance of PT500 thermistor
 * @return       temp 			- Calculated temperature
@@ -369,13 +365,13 @@ static float32_t th_calc_pt100_temperature(const float32_t rth)
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_pt500_temperature(const float32_t rth)
 {
-            float32_t temp  = 0.0f;
-    const   float32_t a     = 500.0f;   // degC
-    const   float32_t b     = 1.9565f;  // degC^-1
-    const   float32_t c     = -0.0003f; // degC^-2
+	float32_t temp  = 0.0f;
 
-    // Calculate temperature
-    temp = (float32_t) (( c * ( rth * rth )) + ( b * rth ) + a );
+	// Limit termistor resistance
+	const float32_t rth_lim = th_limit_f32( rth, TH_PT500_MIN_OHM, TH_PT500_MAX_OHM );
+
+	// Calculate temperature
+	temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth_lim / 500.0f ))) / TH_PT_DIN_EN60751_2B );
     
     return temp;
 }
