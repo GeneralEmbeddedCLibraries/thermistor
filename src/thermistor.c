@@ -363,15 +363,28 @@ static float32_t th_calc_pt500_temperature(const float32_t rth)
 * @return       temp 			- Calculated temperature
 */
 ////////////////////////////////////////////////////////////////////////////////
+
+#define TH_PT_DIN_EN60751_A		( 3.9083e-3 )
+#define TH_PT_DIN_EN60751_B		( -5.775e-7 )
+
+#define TH_PT_DIN_EN60751_AA	(( float32_t )( TH_PT_DIN_EN60751_A * TH_PT_DIN_EN60751_A ))
+#define TH_PT_DIN_EN60751_2B	(( float32_t )( 2.0 * TH_PT_DIN_EN60751_B ))
+#define TH_PT_DIN_EN60751_4B	(( float32_t )( 4.0 * TH_PT_DIN_EN60751_B ))
+
 static float32_t th_calc_pt1000_temperature(const float32_t rth)
 {
             float32_t temp  = 0.0f;
-    const   float32_t a     = 1000.0f;  // degC
-    const   float32_t b     = 3.9145f;  // degC^-1
-    const   float32_t c     = -0.0006f; // degC^-2
+
+/*
+    const   float32_t a     = -241.721082f;  // degC
+    const   float32_t b     = 0.227024;  // degC^-1
+    const   float32_t c     = 1.322689e-5f; // degC^-2
 
     // Calculate temperature
     temp = (float32_t) (( c * ( rth * rth )) + ( b * rth ) + a );
+  */
+
+	temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth / 1000.0f ))) / TH_PT_DIN_EN60751_2B );
     
     return temp;
 }
