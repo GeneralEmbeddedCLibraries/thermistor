@@ -18,20 +18,12 @@ and this project/module adheres to [Semantic Versioning](https://semver.org/spec
    - Software for PT calculations were tested with SIKA simulator
 
 ### Todo
-
+ - Thermistor status check testing
  - Configuration table check
     - lpf_fc != 0
     - pull connection mismatched...
- 
- - Extensive measurement of NTC measurement:
-    - NTC high side with single pull resistor
-    - NTC low side with single pull resistor
-    - NTC high side with both pull resistors
-
- - Extensive measurement of PT1000 measurement:
-    - PT1000 high side with single pull resistor
-    - PT1000 low side with single pull resistor
-    - PT1000 high side with both pull resistors
+ - Power supply ripple compensation algorithm
+ - Self-heating compensation algorithm
 
 
 ---
