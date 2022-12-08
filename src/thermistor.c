@@ -6,8 +6,8 @@
 *@file      thermistor.c
 *@brief     Thermistor measurement and processing
 *@author    Ziga Miklosic
-*@date      23.11.2022
-*@version   V0.1.0
+*@date      08.12.2022
+*@version   V1.0.0
 */
 ////////////////////////////////////////////////////////////////////////////////
 /*!

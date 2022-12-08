@@ -6,8 +6,8 @@
 *@file      thermistor.h
 *@brief     Thermistor measurement and processing
 *@author    Ziga Miklosic
-*@date      23.11.2022
-*@version   V0.1.0
+*@date      08.12.2022
+*@version   V1.0.0
 */
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -27,13 +27,19 @@
 #include <stdbool.h>
 #include "../../thermistor_cfg.h"
 
-
 // ADC low level driver
 #include "drivers/peripheral/adc/adc.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * 	Module version
+ */
+#define TH_VER_MAJOR		( 1 )
+#define TH_VER_MINOR		( 0 )
+#define TH_VER_DEVELOP		( 0 )
 
 /**
  * 	Thermistor status
