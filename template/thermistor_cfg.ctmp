@@ -6,8 +6,8 @@
 *@file      thermistor_cfg.h
 *@brief     Thermistor configurations
 *@author    Ziga Miklosic
-*@date      24.11.2022
-*@version   V0.1.0
+*@date      08.12.2022
+*@version   V1.0.0
 */
 ////////////////////////////////////////////////////////////////////////////////
 /*!
@@ -87,13 +87,7 @@ static const th_cfg_t g_th_cfg[eTH_NUM_OF] =
         .err_type           = eTH_ERR_FLOATING,
     },
 
-    // ----------------------------------------------------------------------------------------------
-
-
-	// PT1000 Configurations
-	// ----------------------------------------------------------------------------------------------
-
-    [eTH_PTC_AUX]	= 
+	[eTH_NTC_AUX]	= 
     {   
         .adc_ch             = eADC_TEMP_AUX,    
         .hw_conn            = eTH_HW_LOW_SIDE, 
@@ -101,11 +95,37 @@ static const th_cfg_t g_th_cfg[eTH_NUM_OF] =
         .pull_up            = 11e3f, 
         .pull_down          = 0, 
         .lpf_fc             = 1.0f,    
-        .type               = eTH_TYPE_PT1000, 
+        .type               = eTH_TYPE_NTC, 
+        .sensor.ntc.beta    = 3380.0f,
+        .sensor.ntc.nom_val = 10e3f,
         .range.min          = -25.0f,
         .range.max          = 150.0f,
         .err_type           = eTH_ERR_FLOATING,
     },
+
+	[eTH_NTC_RELAY]	= 
+    {   
+        .adc_ch             = eADC_TEMP_RELAY,    
+        .hw_conn            = eTH_HW_LOW_SIDE, 
+        .hw_pull            = eTH_HW_PULL_UP, 
+        .pull_up            = 11e3f, 
+        .pull_down          = 0, 
+        .lpf_fc             = 1.0f,    
+        .type               = eTH_TYPE_NTC, 
+        .sensor.ntc.beta    = 3380.0f,
+        .sensor.ntc.nom_val = 10e3f,
+        .range.min          = -25.0f,
+        .range.max          = 150.0f,
+        .err_type           = eTH_ERR_FLOATING,
+    },
+
+    // ----------------------------------------------------------------------------------------------
+
+
+	// PT1000 Configurations
+	// ----------------------------------------------------------------------------------------------
+
+
 
     // ----------------------------------------------------------------------------------------------
 
