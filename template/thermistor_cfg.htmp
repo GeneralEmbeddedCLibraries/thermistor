@@ -1,0 +1,158 @@
+// Copyright (c) 2022 Ziga Miklosic
+// All Rights Reserved
+// This software is under MIT licence (https://opensource.org/licenses/MIT)
+////////////////////////////////////////////////////////////////////////////////
+/**
+*@file      thermistor_cfg.h
+*@brief     Thermistor configurations
+*@author    Ziga Miklosic
+*@date      08.12.2022
+*@version   V1.0.0
+*/
+////////////////////////////////////////////////////////////////////////////////
+/**
+*@addtogroup THERMISTOR
+* @{ <!-- BEGIN GROUP -->
+*/
+////////////////////////////////////////////////////////////////////////////////
+
+#ifndef __THERMISTOR_CFG_H
+#define __THERMISTOR_CFG_H
+
+////////////////////////////////////////////////////////////////////////////////
+// Includes
+////////////////////////////////////////////////////////////////////////////////
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include "drivers/peripheral/adc/adc.h"
+
+
+// USER CODE BEGIN...
+
+#include "project_config.h"
+
+// Debug communication port
+#include "middleware/cli/cli/src/cli.h"
+
+// USER CODE END...
+
+////////////////////////////////////////////////////////////////////////////////
+// Definitions
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ *  Thermistor count
+ */
+typedef enum
+{
+    // USER CODE BEGIN...
+	
+	eTH_NTC_INT = 0,
+	eTH_NTC_COMP,
+	eTH_NTC_AUX,
+	eTH_NTC_RELAY,
+
+	// USER CODE END...
+
+    eTH_NUM_OF
+} th_opt_t;
+
+/**
+ * 	Thermistor handler period
+ *
+ * 	Unit: sec
+ */
+#define TH_HNDL_PERIOD_S                            ( 0.01f )
+
+/**
+ *  Enable/Disable usage of Filter module  
+ */
+#define TH_FILTER_EN                                ( 1 )
+
+/**
+ *  Enable/Disable power supply ripple
+ *
+ *  @note   Enabling power supply ripple compensation algorithm demands in first hand
+ *          to measure power supply potencial!
+ *
+ *          When enabled ADC channel of power supply measurement needs to be provided!
+ */
+#define TH_SUPPLY_RIPPLE_COMP_EN                    ( 0 )
+
+#if ( 1 == TH_SUPPLY_RIPPLE_COMP_EN )
+
+    /**
+     *  Power supply measurement ADC channel
+     *
+     *  @note   When power supply ripple compensation algorithm is enabled
+     *          ADC channel of power supply measurement needs to be provided!
+     */
+    #define TH_SUPPLY_ADC_CH                        ( eADC_BAT )
+    
+#else
+
+    /**
+     *  Power supply voltage of thermistor sensing circuit
+     *
+     *  @note   Power supply measurement is not supported! Provide nominal
+     *          value of thermistor sensing supply voltage in volts.
+     */
+    #define TH_SUPPLY_V                             ( 2.70f )
+
+#endif
+
+/**
+ * 	Enable/Disable debug mode
+ *
+ * 	@note	Disable in release!
+ */
+#define TH_DEBUG_EN                                 ( 1 )
+
+#ifndef DEBUG
+    #undef TH_DEBUG_EN
+    #define TH_DEBUG_EN 0
+#endif
+
+/**
+ *	Enable/Disable asserts
+ *
+ * 	@note	Disable in release!
+ */
+#define TH_ASSERT_EN                                ( 1 )
+
+#ifndef DEBUG
+    #undef TH_DEBUG_EN
+    #define TH_DEBUG_EN 0
+#endif
+
+/**
+ * 	Debug communication port macros
+ */
+#if ( 1 == TH_DEBUG_EN )
+	#define TH_DBG_PRINT( ... )                     ( cli_printf( __VA_ARGS__ ))
+#else
+	#define TH_DBG_PRINT( ... )                     { ; }
+#endif
+
+/**
+ * 	 Assertion macros
+ */
+ #if ( TH_ASSERT_EN )
+	#define TH_ASSERT(x)                            { PROJECT_CONFIG_ASSERT(x) }
+ #else
+  #define TH_ASSERT(x)                              { ; }
+ #endif
+
+////////////////////////////////////////////////////////////////////////////////
+// Functions
+////////////////////////////////////////////////////////////////////////////////
+const void * thermistor_cfg_get_table(void);
+
+#endif // __THERMISTOR_CFG_H
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+* @} <!-- END GROUP -->
+*/
+////////////////////////////////////////////////////////////////////////////////
