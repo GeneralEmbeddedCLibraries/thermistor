@@ -177,7 +177,7 @@ static float32_t th_calc_res_single_pull(const th_opt_t th)
     const float32_t vcc = th_get_vcc();
     
     // Check for valid voltage ranges
-    if (( vth < vcc ) && ( vth >= 0.0f ))
+    if (( vth < vcc ) && ( vth >= 0.0f ) && ( vcc > 0.0f ))
     {
         // Thermistor on low side
         if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw_conn )
@@ -415,28 +415,31 @@ static float32_t th_calc_temperature(const th_opt_t th)
     // Calculate thermistor resistance
     g_th_data[th].res = th_calc_resistance( th );
 
-    // Sensor type
-    switch( gp_cfg_table[th].type )
+    if ( g_th_data[th].res > 0.0f )
     {
-        case eTH_TYPE_NTC:
-            temp = th_calc_ntc_temperature( g_th_data[th].res, gp_cfg_table[th].sensor.ntc.beta, gp_cfg_table[th].sensor.ntc.nom_val );
-            break;
+        // Sensor type
+        switch( gp_cfg_table[th].type )
+        {
+            case eTH_TYPE_NTC:
+                temp = th_calc_ntc_temperature( g_th_data[th].res, gp_cfg_table[th].sensor.ntc.beta, gp_cfg_table[th].sensor.ntc.nom_val );
+                break;
 
-        case eTH_TYPE_PT1000:
-            temp = th_calc_pt1000_temperature( g_th_data[th].res );
-            break;
+            case eTH_TYPE_PT1000:
+                temp = th_calc_pt1000_temperature( g_th_data[th].res );
+                break;
 
-        case eTH_TYPE_PT100:
-            temp = th_calc_pt100_temperature( g_th_data[th].res );
-            break;
+            case eTH_TYPE_PT100:
+                temp = th_calc_pt100_temperature( g_th_data[th].res );
+                break;
 
-        case eTH_TYPE_PT500:
-            temp = th_calc_pt500_temperature( g_th_data[th].res );
-            break;
+            case eTH_TYPE_PT500:
+                temp = th_calc_pt500_temperature( g_th_data[th].res );
+                break;
 
-        default:
-            TH_ASSERT( 0 );
-            break;
+            default:
+                TH_ASSERT( 0 );
+                break;
+        }
     }
 
     return temp;
