@@ -188,9 +188,9 @@ static float32_t th_calc_res_single_pull(const th_opt_t th)
 
         // Thermistor on high side
         else
-        {   
+        {
             // Thermistor on high side with pull-down
-            th_res = (float32_t) (( gp_cfg_table[th].pull_down * vth ) / ( vcc - vth ));
+            th_res = (float32_t) ((( vcc - vth ) * gp_cfg_table[th].pull_down ) / vth );
         } 
     }
     
@@ -599,7 +599,6 @@ static inline float32_t th_limit_f32(const float32_t in, const float32_t min, co
 th_status_t th_init(void)
 {
 	th_status_t status	= eTH_OK;
-	float32_t	th_volt = 0.0f;
 
 	if ( false == gb_is_init )
 	{		
@@ -673,7 +672,6 @@ th_status_t	th_is_init(bool * const p_is_init)
 th_status_t th_hndl(void)
 {
 	th_status_t status	= eTH_OK;
-	float32_t	th_volt = 0.0f;
 
 	TH_ASSERT( true == gb_is_init );
 

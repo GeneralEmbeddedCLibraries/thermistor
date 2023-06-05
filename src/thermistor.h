@@ -102,7 +102,7 @@ typedef enum
  */
 typedef struct
 {	
-    adc_pins_t		adc_ch;			/**<ADC channel */	
+    adc_ch_opt_t    adc_ch;			/**<ADC channel */
     th_hw_conn_t    hw_conn;        /**<Hardware configuration of thermisto connection */
     th_hw_pull_t    hw_pull;        /**<Hardware configuration of pull resistor connection */
     float32_t       pull_up;        /**<Resistance of pull-up resistor */
