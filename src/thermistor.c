@@ -29,6 +29,14 @@
 // Filer module
 #if ( 1 == TH_FILTER_EN )
     #include "middleware/filter/src/filter.h"
+
+    /**
+     *  Compatibility check with Filter module
+     *
+     *  Support version V2.x.x
+     */
+    _Static_assert( 2 == FILTER_VER_MAJOR );
+
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -685,7 +693,7 @@ th_status_t th_hndl(void)
 
 			// Update filter
             #if ( 1 == TH_FILTER_EN )
-                g_th_data[th].temp_filt = filter_rc_update( g_th_data[th].lpf, g_th_data[th].temp );
+                 (void) filter_rc_hndl( g_th_data[th].lpf, g_th_data[th].temp, &g_th_data[th].temp_filt );
             #else
                 g_th_data[th].temp_filt = g_th_data[th].temp;
             #endif
@@ -974,7 +982,7 @@ th_status_t th_get_status(const th_opt_t th)
             &&  ( th < eTH_NUM_OF )
             &&  ( fc > 0.0f ))
     	{
-            if ( eFILTER_OK != filter_rc_change_cutoff( g_th_data[th].lpf, fc, TH_HNDL_FREQ_HZ ))
+            if ( eFILTER_OK != filter_rc_fc_set( g_th_data[th].lpf, fc ))
             {
                 status = eTH_ERROR;
             }
@@ -1008,7 +1016,7 @@ th_status_t th_get_status(const th_opt_t th)
             &&  ( NULL != p_fc )
             &&  ( th < eTH_NUM_OF ))
     	{
-            *p_fc = filter_rc_get_cutoff( g_th_data[th].lpf );
+            (void) filter_rc_fc_get( g_th_data[th].lpf, p_fc );
     	}
     	else
     	{
