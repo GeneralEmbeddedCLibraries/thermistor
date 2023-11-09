@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Ziga Miklosic
+// Copyright (c) 2023 Ziga Miklosic
 // All Rights Reserved
 // This software is under MIT licence (https://opensource.org/licenses/MIT)
 ////////////////////////////////////////////////////////////////////////////////
@@ -6,8 +6,9 @@
 *@file      thermistor.h
 *@brief     Thermistor measurement and processing
 *@author    Ziga Miklosic
-*@date      08.12.2022
-*@version   V1.0.0
+*@email     ziga.miklosic@gmail.com
+*@date      09.11.2023
+*@version   V1.1.0
 */
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -38,7 +39,7 @@
  * 	Module version
  */
 #define TH_VER_MAJOR		( 1 )
-#define TH_VER_MINOR		( 0 )
+#define TH_VER_MINOR		( 1 )
 #define TH_VER_DEVELOP		( 0 )
 
 /**

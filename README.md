@@ -20,7 +20,7 @@ Picture bellow shows all supported NTC/PT1000 thermistor hardware connections:
 It is mandatory to have following definition of low level driver API:
  - Function to retriev voltage on pin in volts. Prototype function: 
     ```C 
-    adc_status_t adc_get_real   (const adc_ch_t adc_ch, float32_t * const p_real)
+    adc_status_t adc_get_real(const adc_ch_t ch, float32_t * const p_real)
     ```
 
 Additionally ADC low level driver must take following path:
