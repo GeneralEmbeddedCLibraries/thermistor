@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "drivers/peripheral/adc/adc.h"
+#include "drivers/peripheral/adc/adc/src/adc.h"
 
 
 // USER CODE BEGIN...
@@ -141,10 +141,96 @@ typedef enum
   #define TH_ASSERT(x)                              { ; }
  #endif
 
+/**
+ *  Thermistor error status type
+ */
+typedef enum
+{
+    eTH_ERR_FLOATING = 0,       /**<Floating error - clears after error condition is gone */
+    eTH_ERR_PERMANENT,          /**<Permanent error - clears either on reset or API call of th_reset_error */
+} th_err_type_t;
+
+/**
+ *  Sensor types
+ */
+typedef enum
+{
+    eTH_TYPE_NTC = 0,       /**<NTC thermistor */
+    eTH_TYPE_PT1000,        /**<PT1000 */
+    eTH_TYPE_PT100,         /**<PT100 */
+    eTH_TYPE_PT500          /**<PT500 */
+} th_temp_type_t;
+
+/**
+ *  Sensor HW connection
+ *
+ *  @brief  Thermistor is either connected on high or low
+ *          side. High side means that thermistor is connected
+ *          between positive rail and pull-down resistor.
+ *          Low side means that thermistor is connected between
+ *          GND and pull-up resistor
+ */
+typedef enum
+{
+    eTH_HW_LOW_SIDE = 0,    /**<Thermistor layouted on low side */
+    eTH_HW_HIGH_SIDE,       /**<Thermistor layouted on high side */
+} th_hw_conn_t;
+
+/**
+ *  Pull resistor connections
+ */
+typedef enum
+{
+    eTH_HW_PULL_DOWN   = 0,    /**<Thermistor HW connected with pull-down resistor */
+    eTH_HW_PULL_UP,            /**<Thermistor HW connected with pull-up resistor */
+    eTH_HW_PULL_BOTH,          /**<Thermistor HW connected with both pull-up and pull-down resistor */
+} th_hw_pull_t;
+
+/**
+ *  Thermistor configuration
+ */
+typedef struct
+{
+    adc_ch_t adc_ch;    /**<ADC channel */
+
+    /**<HW configuration */
+    struct
+    {
+        th_hw_conn_t    conn;       /**<Hardware configuration of thermisto connection */
+        th_hw_pull_t    pull_mode;  /**<Hardware configuration of pull resistor connection */
+        float32_t       pull_up;    /**<Resistance of pull-up resistor */
+        float32_t       pull_down;  /**<Resistance of pull-down resistor */
+    } hw;
+
+    /**<NTC */
+    struct
+    {
+        float32_t beta;     /**<NTC Beta factor */
+        float32_t nom_val;  /**<Nominal value of NTC @25degC in Ohms */
+    } ntc;
+
+    /**<Valid range */
+    struct
+    {
+        float32_t min;  /**<Minimum allowed limit in degC */
+        float32_t max;  /**<Maximum allowed limit in degC */
+    } range;
+
+    float32_t       lpf_fc;     /**<Default LPF cutoff frequency */
+    th_temp_type_t  type;       /**<Sensor type */
+    th_err_type_t   err_type;   /**<Error type */
+
+} th_cfg_t;
+
+/**
+ *  32-bit floating point definition
+ */
+typedef float float32_t;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
-const void * thermistor_cfg_get_table(void);
+const th_cfg_t * th_cfg_get_table(void);
 
 #endif // __THERMISTOR_CFG_H
 

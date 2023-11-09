@@ -57,20 +57,36 @@ static const th_cfg_t g_th_cfg[eTH_NUM_OF] =
 
     [eTH_NTC_BRIDGE]	=
     {   
-        .adc_ch             = eADC_CH_BRIDGE_TEMP,
-        .hw_conn            = eTH_HW_HIGH_SIDE,
-        .hw_pull            = eTH_HW_PULL_DOWN,
-        .pull_up            = 0.0f,
-        .pull_down          = 4.7e3f,
-        .lpf_fc             = 1.0f,    
-        .type               = eTH_TYPE_NTC, 
-        .sensor.ntc.beta    = 3435.0f,      //25/85 degC
-        .sensor.ntc.nom_val = 10e3f,
-        .range.min          = -25.0f,
-        .range.max          = 150.0f,
-        .err_type           = eTH_ERR_FLOATING,
-    },
+        // ADC channel
+        .adc_ch = eADC_CH_BRIDGE_TEMP,
 
+        // HW configurations
+        .hw =
+        {
+            .conn      = eTH_HW_HIGH_SIDE,
+            .pull_mode = eTH_HW_PULL_DOWN,
+            .pull_up   = 0.0f,
+            .pull_down = 4.7e3f,
+        },
+
+        // NTC sensor
+        .type = eTH_TYPE_NTC,
+        .ntc =
+        {
+            .beta    = 3435.0f,      //25/85 degC
+            .nom_val = 10e3f,
+        },
+
+        // Valid range
+        .range =
+        {
+            .min = -25.0f,
+            .max = 150.0f,
+        },
+
+        .lpf_fc     = 1.0f,
+        .err_type   = eTH_ERR_FLOATING,
+    },
 
     // USER CODE END...
 };
@@ -86,7 +102,7 @@ static const th_cfg_t g_th_cfg[eTH_NUM_OF] =
 * @return		pointer to configuration table
 */
 ////////////////////////////////////////////////////////////////////////////////
-const void * thermistor_cfg_get_table(void)
+const th_cfg_t * th_cfg_get_table(void)
 {
 	return (th_cfg_t*) &g_th_cfg;
 }
