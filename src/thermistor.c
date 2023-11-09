@@ -131,8 +131,10 @@ static float32_t    th_calc_pt500_temperature   (const float32_t rth);
 static float32_t    th_calc_pt1000_temperature  (const float32_t rth);
 static th_status_t  th_init_filter              (const th_ch_t th);
 static th_status_t  th_status_hndl              (const th_ch_t th, const float32_t temp);
+static th_status_t  th_check_cfg_table          (const th_cfg_t * const p_cfg);
 
 static inline float32_t th_limit_f32			(const float32_t in, const float32_t min, const float32_t max);
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -556,6 +558,61 @@ static th_status_t th_status_hndl(const th_ch_t th, const float32_t temp)
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
+* @brief        Check configuration table
+*
+* @param[in]    p_cfg   - Configuration table
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
+static th_status_t th_check_cfg_table(const th_cfg_t * const p_cfg)
+{
+    th_status_t status = eTH_OK;
+
+    if ( NULL != p_cfg )
+    {
+        // Check all entries
+        for ( uint32_t th = 0; th < eTH_NUM_OF; th++ )
+        {
+            /**
+             *  Check for correct configuration
+             *
+             *      1. LPF filter cutoff frequency shall be higher that 0 Hz
+             *      2. Valid HW configuration are:
+             *          - eTH_HW_LOW_SIDE  with eTH_HW_PULL_UP
+             *          - eTH_HW_HIGH_SIDE with eTH_HW_PULL_DOWN
+             *          - eTH_HW_LOW_SIDE  with eTH_HW_PULL_BOTH
+             *          - eTH_HW_HIGH_SIDE with eTH_HW_PULL_BOTH
+             *      3. Range: Max is larger than min value
+             */
+
+            if  (   ( p_cfg[th].lpf_fc > 0.0f )                                                                             // 1.
+                &&  (   (( eTH_HW_LOW_SIDE == p_cfg[th].hw.conn )   && ( eTH_HW_PULL_UP == p_cfg[th].hw.pull_mode ))        // 2.
+                    ||  (( eTH_HW_HIGH_SIDE == p_cfg[th].hw.conn )  && ( eTH_HW_PULL_DOWN == p_cfg[th].hw.pull_mode  ))
+                    ||  (( eTH_HW_LOW_SIDE == p_cfg[th].hw.conn )   && ( eTH_HW_PULL_BOTH == p_cfg[th].hw.pull_mode  ))
+                    ||  (( eTH_HW_HIGH_SIDE == p_cfg[th].hw.conn )  && ( eTH_HW_PULL_BOTH == p_cfg[th].hw.pull_mode  )))    // 3.
+                &&  ( p_cfg[th].range.max > p_cfg[th].range.min ))
+            {
+                // Valid config
+            }
+            else
+            {
+                status = eTH_ERROR;
+                TH_DBG_PRINT( "ERROR: Invalid thermistor configuration at %d entry!", th );
+                break;
+            }
+        }
+    }
+    else
+    {
+        status = eTH_ERROR;
+        TH_DBG_PRINT( "ERROR: Missing thermistor config table!" );
+    }
+
+    return status;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
 * @brief        Limit floating point value
 *
 * @param[in]    in	- Input value to limit
@@ -613,16 +670,19 @@ th_status_t th_init(void)
 	if ( false == gb_is_init )
 	{		
     	// Get configuration table
-		gp_cfg_table = thermistor_cfg_get_table();
+		gp_cfg_table = th_cfg_get_table();
+
+		// Check configuration table
+		status = th_check_cfg_table( gp_cfg_table );
         
         // Configuration table missing
-		if ( NULL != gp_cfg_table )
+		if ( eTH_OK == status )
 		{
             // Init all thermistors
             for ( uint32_t th = 0; th < eTH_NUM_OF; th++ )
             {
                 // Get current temperature
-                g_th_data[th].temp = th_calc_temperature( th );
+                g_th_data[th].temp      = th_calc_temperature( th );
                 g_th_data[th].temp_filt = g_th_data[th].temp;
                 
                 // Init filter
@@ -632,10 +692,6 @@ th_status_t th_init(void)
                     break;
                 }
             }
-        }
-        else
-        {
-            status = eTH_ERROR;
         }
 
 		// Init success
