@@ -9,9 +9,21 @@ and this project/module adheres to [Semantic Versioning](https://semver.org/spec
 
 ### Added
  - Compatibility check with filter module
+ - Calculations to degree F and Kelvin
+ - Added de-init function
 
 ### Changed
  - Filter module compatibility changes
+
+### Todo
+ - Thermistor status check testing
+ - Configuration table check
+    - lpf_fc != 0
+    - pull connection mismatched...
+ - Power supply ripple compensation algorithm
+ - Self-heating compensation algorithm
+ - Adoption to analog module
+ - Removing filter from thermistor and moving it into analog
 
 ---
 ## V1.0.0 - 08.12.2022

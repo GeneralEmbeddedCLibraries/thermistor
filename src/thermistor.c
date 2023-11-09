@@ -122,15 +122,15 @@ static th_data_t g_th_data[eTH_NUM_OF] = {0};
 // Function Prototypes
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t    th_get_vcc                  (void);
-static float32_t    th_calc_res_single_pull     (const th_opt_t th);
-static float32_t    th_calc_res_both_pull       (const th_opt_t th);
-static float32_t    th_calc_resistance          (const th_opt_t th);
+static float32_t    th_calc_res_single_pull     (const th_ch_t th);
+static float32_t    th_calc_res_both_pull       (const th_ch_t th);
+static float32_t    th_calc_resistance          (const th_ch_t th);
 static float32_t    th_calc_ntc_temperature     (const float32_t rth, const float32_t beta, const float32_t rth_nom);
 static float32_t    th_calc_pt100_temperature   (const float32_t rth);
 static float32_t    th_calc_pt500_temperature   (const float32_t rth);
 static float32_t    th_calc_pt1000_temperature  (const float32_t rth);
-static th_status_t  th_init_filter              (const th_opt_t th);
-static th_status_t  th_status_hndl              (const th_opt_t th, const float32_t temp);
+static th_status_t  th_init_filter              (const th_ch_t th);
+static th_status_t  th_status_hndl              (const th_ch_t th, const float32_t temp);
 
 static inline float32_t th_limit_f32			(const float32_t in, const float32_t min, const float32_t max);
 
@@ -174,7 +174,7 @@ static float32_t th_get_vcc(void)
 * @return       res     - Resistance of thermistor
 */
 ////////////////////////////////////////////////////////////////////////////////
-static float32_t th_calc_res_single_pull(const th_opt_t th)
+static float32_t th_calc_res_single_pull(const th_ch_t th)
 {
     float32_t th_res = 0.0f;
     
@@ -221,7 +221,7 @@ static float32_t th_calc_res_single_pull(const th_opt_t th)
 * @return       res     - Resistance of thermistor
 */
 ////////////////////////////////////////////////////////////////////////////////
-static float32_t th_calc_res_both_pull(const th_opt_t th)
+static float32_t th_calc_res_both_pull(const th_ch_t th)
 {
     float32_t th_res = 0.0f;
     
@@ -294,7 +294,7 @@ static float32_t th_calc_res_both_pull(const th_opt_t th)
 * @return       res     - Resistance of thermistor
 */
 ////////////////////////////////////////////////////////////////////////////////
-static float32_t th_calc_resistance(const th_opt_t th)
+static float32_t th_calc_resistance(const th_ch_t th)
 {
     float32_t th_res = 0.0f;
 
@@ -416,7 +416,7 @@ static float32_t th_calc_pt1000_temperature(const float32_t rth)
 * @return       temp    - Calculated temperature
 */
 ////////////////////////////////////////////////////////////////////////////////
-static float32_t th_calc_temperature(const th_opt_t th)
+static float32_t th_calc_temperature(const th_ch_t th)
 {
     float32_t temp = 0.0f;
 
@@ -461,7 +461,7 @@ static float32_t th_calc_temperature(const th_opt_t th)
 * @return       status  - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
-static th_status_t th_init_filter(const th_opt_t th)
+static th_status_t th_init_filter(const th_ch_t th)
 {
     th_status_t status = eTH_OK;
 
@@ -487,7 +487,7 @@ static th_status_t th_init_filter(const th_opt_t th)
 * @return       status  - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
-static th_status_t th_status_hndl(const th_opt_t th, const float32_t temp)
+static th_status_t th_status_hndl(const th_ch_t th, const float32_t temp)
 {
     th_status_t status = eTH_OK;
 
@@ -601,7 +601,7 @@ static inline float32_t th_limit_f32(const float32_t in, const float32_t min, co
 /*!
 * @brief        Init thermistors
 *
-* @return       status  - Status of operation
+* @return       status - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
 th_status_t th_init(void)
@@ -648,6 +648,33 @@ th_status_t th_init(void)
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
+* @brief        De-init thermistors
+*
+* @return       status - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
+th_status_t th_deinit(void)
+{
+    th_status_t status = eTH_OK;
+
+    if ( true == gb_is_init )
+    {
+        // Reset all thermistor values
+        for ( uint32_t th = 0; th < eTH_NUM_OF; th++ )
+        {
+            // Get current temperature
+            g_th_data[th].temp      = 0.0f;
+            g_th_data[th].temp_filt = 0.0f;
+        }
+
+        gb_is_init = false;
+    }
+
+    return status;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
 * @brief        Get initialization flag
 *
 * @param[out]   p_is_init   - Initialization flag
@@ -674,12 +701,12 @@ th_status_t	th_is_init(bool * const p_is_init)
 /*!
 * @brief        Thermistor main handler
 *
-* @return       status  - Status of operation
+* @return       status - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
 th_status_t th_hndl(void)
 {
-	th_status_t status	= eTH_OK;
+	th_status_t status = eTH_OK;
 
 	TH_ASSERT( true == gb_is_init );
 
@@ -719,7 +746,7 @@ th_status_t th_hndl(void)
 * @return       status  - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t th_get_degC(const th_opt_t th, float32_t * const p_temp)
+th_status_t th_get_degC(const th_ch_t th, float32_t * const p_temp)
 {
 	th_status_t status = eTH_OK;
 
@@ -750,7 +777,7 @@ th_status_t th_get_degC(const th_opt_t th, float32_t * const p_temp)
 * @return       status  - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t th_get_degF(const th_opt_t th, float32_t * const p_temp)
+th_status_t th_get_degF(const th_ch_t th, float32_t * const p_temp)
 {
 	th_status_t status = eTH_OK;
 
@@ -762,8 +789,8 @@ th_status_t th_get_degF(const th_opt_t th, float32_t * const p_temp)
         &&	( NULL != p_temp )
         &&  ( th < eTH_NUM_OF ))
 	{
-        // TODO: Convert ...
-		*p_temp = g_th_data[th].temp;
+        // Conversion formula: T[°F] = 9/5[°F/°C] * T[°C] + 32[°F]
+		*p_temp = (float32_t)(( 1.8f * g_th_data[th].temp ) + 32.0f );
 	}
 	else
 	{
@@ -782,7 +809,7 @@ th_status_t th_get_degF(const th_opt_t th, float32_t * const p_temp)
 * @return       status  - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t th_get_kelvin(const th_opt_t th, float32_t * const p_temp)
+th_status_t th_get_kelvin(const th_ch_t th, float32_t * const p_temp)
 {
 	th_status_t status = eTH_OK;
 
@@ -794,8 +821,8 @@ th_status_t th_get_kelvin(const th_opt_t th, float32_t * const p_temp)
         &&	( NULL != p_temp )
         &&  ( th < eTH_NUM_OF ))
 	{
-        // TODO: Convert...
-		*p_temp = g_th_data[th].temp;
+        // Conversion formula: T[K] = T[°C] + 273.15[K]
+		*p_temp = (float32_t)( g_th_data[th].temp + 273.15f );
 	}
 	else
 	{
@@ -814,7 +841,7 @@ th_status_t th_get_kelvin(const th_opt_t th, float32_t * const p_temp)
 * @return       status  - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
+th_status_t th_get_resistance(const th_ch_t th, float32_t * const p_res)
 {
 	th_status_t status = eTH_OK;
 
@@ -844,7 +871,7 @@ th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res)
 * @return       status  - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t th_get_status(const th_opt_t th)
+th_status_t th_get_status(const th_ch_t th)
 {
     th_status_t status = eTH_OK;
 
@@ -875,7 +902,7 @@ th_status_t th_get_status(const th_opt_t th)
     * @return       status  - Status of operation
     */
     ////////////////////////////////////////////////////////////////////////////////
-    th_status_t th_get_degC_filt(const th_opt_t th, float32_t * const p_temp)
+    th_status_t th_get_degC_filt(const th_ch_t th, float32_t * const p_temp)
     {
     	th_status_t status = eTH_OK;
 
@@ -906,7 +933,7 @@ th_status_t th_get_status(const th_opt_t th)
     * @return       status  - Status of operation
     */
     ////////////////////////////////////////////////////////////////////////////////
-    th_status_t th_get_degF_filt(const th_opt_t th, float32_t * const p_temp)
+    th_status_t th_get_degF_filt(const th_ch_t th, float32_t * const p_temp)
     {
     	th_status_t status = eTH_OK;
 
@@ -918,8 +945,8 @@ th_status_t th_get_status(const th_opt_t th)
     		&&	( NULL != p_temp )
             &&  ( th < eTH_NUM_OF ))
     	{
-            // TODO: Convert...
-    		*p_temp = g_th_data[th].temp_filt;
+            // Conversion formula: T[°F] = 9/5[°F/°C] * T[°C] + 32[°F]
+            *p_temp = (float32_t)(( 1.8f * g_th_data[th].temp_filt ) + 32.0f );
     	}
     	else
     	{
@@ -938,7 +965,7 @@ th_status_t th_get_status(const th_opt_t th)
     * @return       status  - Status of operation
     */
     ////////////////////////////////////////////////////////////////////////////////
-    th_status_t th_get_kelvin_filt(const th_opt_t th, float32_t * const p_temp)
+    th_status_t th_get_kelvin_filt(const th_ch_t th, float32_t * const p_temp)
     {
     	th_status_t status = eTH_OK;
 
@@ -950,8 +977,8 @@ th_status_t th_get_status(const th_opt_t th)
     		&&	( NULL != p_temp )
             &&  ( th < eTH_NUM_OF ))
     	{
-            // TODO: Convert...
-    		*p_temp = g_th_data[th].temp_filt;
+            // Conversion formula: T[K] = T[°C] + 273.15[K]
+            *p_temp = (float32_t)( g_th_data[th].temp_filt + 273.15f );
     	}
     	else
     	{
@@ -970,7 +997,7 @@ th_status_t th_get_status(const th_opt_t th)
     * @return       status  - Status of operation
     */
     ////////////////////////////////////////////////////////////////////////////////
-    th_status_t th_set_lpf_fc(const th_opt_t th, const float32_t fc)
+    th_status_t th_set_lpf_fc(const th_ch_t th, const float32_t fc)
     {
     	th_status_t status = eTH_OK;
 
@@ -1004,7 +1031,7 @@ th_status_t th_get_status(const th_opt_t th)
     * @return       status  - Status of operation
     */
     ////////////////////////////////////////////////////////////////////////////////
-    th_status_t th_get_lpf_fc(const th_opt_t th, float32_t * const p_fc)
+    th_status_t th_get_lpf_fc(const th_ch_t th, float32_t * const p_fc)
     {
     	th_status_t status = eTH_OK;
 

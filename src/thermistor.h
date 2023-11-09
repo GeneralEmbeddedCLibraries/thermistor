@@ -102,7 +102,7 @@ typedef enum
  */
 typedef struct
 {	
-    adc_ch_opt_t    adc_ch;			/**<ADC channel */
+    adc_ch_t        adc_ch;			/**<ADC channel */
     th_hw_conn_t    hw_conn;        /**<Hardware configuration of thermisto connection */
     th_hw_pull_t    hw_pull;        /**<Hardware configuration of pull resistor connection */
     float32_t       pull_up;        /**<Resistance of pull-up resistor */
@@ -142,20 +142,22 @@ typedef float float32_t;
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
 th_status_t th_init				(void);
+th_status_t th_deinit           (void);
 th_status_t	th_is_init			(bool * const p_is_init);
 th_status_t th_hndl				(void);
-th_status_t th_get_degC			(const th_opt_t th, float32_t * const p_temp);
-th_status_t th_get_degF			(const th_opt_t th, float32_t * const p_temp);
-th_status_t th_get_kelvin		(const th_opt_t th, float32_t * const p_temp);
-th_status_t th_get_resistance   (const th_opt_t th, float32_t * const p_res);
-th_status_t th_get_status       (const th_opt_t th);
+
+th_status_t th_get_degC			(const th_ch_t th, float32_t * const p_temp);
+th_status_t th_get_degF			(const th_ch_t th, float32_t * const p_temp);
+th_status_t th_get_kelvin		(const th_ch_t th, float32_t * const p_temp);
+th_status_t th_get_resistance   (const th_ch_t th, float32_t * const p_res);
+th_status_t th_get_status       (const th_ch_t th);
 
 #if ( 1 == TH_FILTER_EN )
-    th_status_t th_get_degC_filt	(const th_opt_t th, float32_t * const p_temp);
-    th_status_t th_get_degF_filt	(const th_opt_t th, float32_t * const p_temp);
-    th_status_t th_get_kelvin_filt	(const th_opt_t th, float32_t * const p_temp);
-    th_status_t th_set_lpf_fc		(const th_opt_t th, const float32_t fc);
-    th_status_t th_get_lpf_fc		(const th_opt_t th, float32_t * const p_fc);
+    th_status_t th_get_degC_filt	(const th_ch_t th, float32_t * const p_temp);
+    th_status_t th_get_degF_filt	(const th_ch_t th, float32_t * const p_temp);
+    th_status_t th_get_kelvin_filt	(const th_ch_t th, float32_t * const p_temp);
+    th_status_t th_set_lpf_fc		(const th_ch_t th, const float32_t fc);
+    th_status_t th_get_lpf_fc		(const th_ch_t th, float32_t * const p_fc);
 #endif
 
 #endif // __THERMISTOR_H

@@ -30,7 +30,7 @@
 
 // USER CODE BEGIN...
 
-#include "project_config.h"
+#include "config/proj_cfg.h"
 
 // Debug communication port
 #include "middleware/cli/cli/src/cli.h"
@@ -42,21 +42,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- *  Thermistor count
+ *  Thermistor channels
  */
 typedef enum
 {
     // USER CODE BEGIN...
 	
-	eTH_NTC_INT = 0,
-	eTH_NTC_COMP,
-	eTH_NTC_AUX,
-	eTH_NTC_RELAY,
+	eTH_NTC_BRIDGE = 0,
 
 	// USER CODE END...
 
     eTH_NUM_OF
-} th_opt_t;
+} th_ch_t;
 
 /**
  * 	Thermistor handler period
@@ -98,7 +95,7 @@ typedef enum
      *  @note   Power supply measurement is not supported! Provide nominal
      *          value of thermistor sensing supply voltage in volts.
      */
-    #define TH_SUPPLY_V                             ( 2.70f )
+    #define TH_SUPPLY_V                             ( 3.30f )
 
 #endif
 
@@ -139,7 +136,7 @@ typedef enum
  * 	 Assertion macros
  */
  #if ( TH_ASSERT_EN )
-	#define TH_ASSERT(x)                            { PROJECT_CONFIG_ASSERT(x) }
+	#define TH_ASSERT(x)                            { PROJ_CFG_ASSERT(x) }
  #else
   #define TH_ASSERT(x)                              { ; }
  #endif

@@ -55,79 +55,22 @@ static const th_cfg_t g_th_cfg[eTH_NUM_OF] =
 	// NTC Configurations
 	// ----------------------------------------------------------------------------------------------
 
-    [eTH_NTC_INT]	= 
+    [eTH_NTC_BRIDGE]	=
     {   
-        .adc_ch             = eADC_TEMP_INT,    
-        .hw_conn            = eTH_HW_LOW_SIDE, 
-        .hw_pull            = eTH_HW_PULL_UP, 
-        .pull_up            = 11e3f, 
-        .pull_down          = 0, 
+        .adc_ch             = eADC_CH_BRIDGE_TEMP,
+        .hw_conn            = eTH_HW_HIGH_SIDE,
+        .hw_pull            = eTH_HW_PULL_DOWN,
+        .pull_up            = 0.0f,
+        .pull_down          = 4.7e3f,
         .lpf_fc             = 1.0f,    
         .type               = eTH_TYPE_NTC, 
-        .sensor.ntc.beta    = 3380.0f,
+        .sensor.ntc.beta    = 3435.0f,      //25/85 degC
         .sensor.ntc.nom_val = 10e3f,
         .range.min          = -25.0f,
         .range.max          = 150.0f,
         .err_type           = eTH_ERR_FLOATING,
     },
 
-    [eTH_NTC_COMP]	= 
-    {   
-        .adc_ch             = eADC_TEMP_COMP,    
-        .hw_conn            = eTH_HW_LOW_SIDE, 
-        .hw_pull            = eTH_HW_PULL_UP, 
-        .pull_up            = 11e3f, 
-        .pull_down          = 0, 
-        .lpf_fc             = 1.0f,    
-        .type               = eTH_TYPE_NTC, 
-        .sensor.ntc.beta    = 3380.0f,
-        .sensor.ntc.nom_val = 10e3f,
-        .range.min          = -25.0f,
-        .range.max          = 150.0f,
-        .err_type           = eTH_ERR_FLOATING,
-    },
-
-	[eTH_NTC_AUX]	= 
-    {   
-        .adc_ch             = eADC_TEMP_AUX,    
-        .hw_conn            = eTH_HW_LOW_SIDE, 
-        .hw_pull            = eTH_HW_PULL_UP, 
-        .pull_up            = 11e3f, 
-        .pull_down          = 0, 
-        .lpf_fc             = 1.0f,    
-        .type               = eTH_TYPE_NTC, 
-        .sensor.ntc.beta    = 3380.0f,
-        .sensor.ntc.nom_val = 10e3f,
-        .range.min          = -25.0f,
-        .range.max          = 150.0f,
-        .err_type           = eTH_ERR_FLOATING,
-    },
-
-	[eTH_NTC_RELAY]	= 
-    {   
-        .adc_ch             = eADC_TEMP_RELAY,    
-        .hw_conn            = eTH_HW_LOW_SIDE, 
-        .hw_pull            = eTH_HW_PULL_UP, 
-        .pull_up            = 11e3f, 
-        .pull_down          = 0, 
-        .lpf_fc             = 1.0f,    
-        .type               = eTH_TYPE_NTC, 
-        .sensor.ntc.beta    = 3380.0f,
-        .sensor.ntc.nom_val = 10e3f,
-        .range.min          = -25.0f,
-        .range.max          = 150.0f,
-        .err_type           = eTH_ERR_FLOATING,
-    },
-
-    // ----------------------------------------------------------------------------------------------
-
-
-	// PT1000 Configurations
-	// ----------------------------------------------------------------------------------------------
-
-
-
-    // ----------------------------------------------------------------------------------------------
 
     // USER CODE END...
 };
