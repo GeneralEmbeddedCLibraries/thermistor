@@ -48,12 +48,12 @@
  *
  * 	Unit: Hz
  */
-#define TH_HNDL_FREQ_HZ					( 1.0f / TH_HNDL_PERIOD_S )
+#define TH_HNDL_FREQ_HZ			( 1.0f / TH_HNDL_PERIOD_S )
 
 /**
  *  Factor for NTC calculation when given nominal NTC value at 25 degC
  */
-#define TH_NTC_25DEG_FACTOR             ((float32_t) ( 1.0 / 298.15 ))      // Leave double
+#define TH_NTC_25DEG_FACTOR     ((float32_t) ( 1.0 / 298.15 ))      // Leave double
 
 /**
  *	PT100/500/1000 temperature calculation factors according
