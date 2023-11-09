@@ -5,6 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project/module adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## V1.1.0 - 09.11.2023
+
+### Added
+ - Compatibility check with filter module
+ - Calculations to degree F and Kelvin
+ - Added de-init function
+ - Configuration table validy check
+
+### Changed
+ - Filter module version compatibility changes
+
+### Todo
+ - Thermistor status check testing
+ - Power supply ripple compensation algorithm
+ - Self-heating compensation algorithm
+ - Adoption to analog module
+ - Removing filter from thermistor and moving it into analog
+
+---
 ## V1.0.0 - 08.12.2022
 
 ### Added

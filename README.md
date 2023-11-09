@@ -14,19 +14,18 @@ Picture bellow shows all supported NTC/PT1000 thermistor hardware connections:
 ![](doc/pic/ntc_calculations_2_hw_options.jpg)
 
 
-
 ## **Dependencies**
 
 ### **1. ADC Low Level driver**
 It is mandatory to have following definition of low level driver API:
  - Function to retriev voltage on pin in volts. Prototype function: 
     ```C 
-    float32_t adc_get_real (const adc_pins_t pin)
+    adc_status_t adc_get_real(const adc_ch_t ch, float32_t * const p_real)
     ```
 
 Additionally ADC low level driver must take following path:
 ```
-"root/drivers/periphery/adc/adc.h"
+"root/drivers/periphery/adc/adc/src/adc.h"
 ```
 
 ### **2. Filter module**
@@ -209,24 +208,24 @@ Calculation factors/limits are according to DIN EN60751 standard:
 ## **API**
 | API Functions | Description | Prototype |
 | --- | ----------- | ----- |
-| **th_init** | Initialization of thermistor module | th_status_t th_init(void) |
-| **th_is_init** | Get initialization flag | th_status_t th_is_init(bool * const p_is_init) |
-| **th_hndl** | Thermistor handler | th_status_t th_hndl(void) |
-| **th_get_degC** | Get un-filtered temperature in degrees C | th_status_t th_get_degC(const th_opt_t th, float32_t * const p_temp) |
-| **th_get_degF** | Get un-filtered temperature in degrees F | th_status_t th_get_degF(const th_opt_t th, float32_t * const p_temp) |
-| **th_get_kelvin** | Get un-filtered temperature in kelvin | th_status_t th_get_kelvin(const th_opt_t th, float32_t * const p_temp) |
-| **th_get_resistance** | Get thermistor resistance | th_status_t th_get_resistance(const th_opt_t th, float32_t * const p_res) |
-| **th_get_status** | Get thermistor status | th_status_t th_get_status(const th_opt_t th) |
+| **th_init**           | Initialization of thermistor module       | th_status_t th_init(void) |
+| **th_deinit**         | De-initialization of thermistor module    | th_status_t th_deinit(void) |
+| **th_is_init**        | Get initialization flag                   | th_status_t th_is_init(bool * const p_is_init) |
+| **th_hndl**           | Thermistor handler                        | th_status_t th_hndl(void) |
+| **th_get_degC**       | Get un-filtered temperature in degrees C  | th_status_t th_get_degC(const th_ch_t th, float32_t * const p_temp) |
+| **th_get_degF**       | Get un-filtered temperature in degrees F  | th_status_t th_get_degF(const th_ch_t th, float32_t * const p_temp) |
+| **th_get_kelvin**     | Get un-filtered temperature in kelvin     | th_status_t th_get_kelvin(const th_ch_t th, float32_t * const p_temp) |
+| **th_get_resistance** | Get thermistor resistance                 | th_status_t th_get_resistance(const th_ch_t th, float32_t * const p_res) |
+| **th_get_status**     | Get thermistor status                     | th_status_t th_get_status(const th_ch_t th) |
 
 If filter is enabled (*TH_FILTER_EN* = 1) then following API is also available:
 | API Functions | Description | Prototype |
 | --- | ----------- | ----- |
-| **th_get_degC_filt** | Get LPF filtered temperature in degrees C | th_status_t th_get_degC_filt(const th_opt_t th, float32_t * const p_temp) | 
-| **th_get_degF_filt** | Get LPF filtered temperature in degrees F | th_status_t th_get_degF_filt(const th_opt_t th, float32_t * const p_temp) | 
-| **th_get_kelvin_filt** | Get LPF filtered temperature in kelvin | th_status_t th_get_kelvin_filt(const th_opt_t th, float32_t * const p_temp) | 
-| **th_set_lpf_fc** | Change LPF cutoff frequency | th_status_t th_set_lpf_fc(const th_opt_t th, const float32_t fc) | 
-| **th_get_lpf_fc** | Get LPF cutoff frequency | th_status_t th_get_lpf_fc(const th_opt_t th, float32_t * const p_fc) | 
-
+| **th_get_degC_filt**      | Get LPF filtered temperature in degrees C | th_status_t th_get_degC_filt(const th_ch_t th, float32_t * const p_temp) | 
+| **th_get_degF_filt**      | Get LPF filtered temperature in degrees F | th_status_t th_get_degF_filt(const th_ch_t th, float32_t * const p_temp) | 
+| **th_get_kelvin_filt**    | Get LPF filtered temperature in kelvin    | th_status_t th_get_kelvin_filt(const th_ch_t th, float32_t * const p_temp) | 
+| **th_set_lpf_fc**         | Change LPF cutoff frequency               | th_status_t th_set_lpf_fc(const th_ch_t th, const float32_t fc) | 
+| **th_get_lpf_fc**         | Get LPF cutoff frequency                  | th_status_t th_get_lpf_fc(const th_ch_t th, float32_t * const p_fc) | 
 
 
 ## **Usage**
@@ -234,41 +233,39 @@ If filter is enabled (*TH_FILTER_EN* = 1) then following API is also available:
 **GENERAL NOTICE: Put all user code between sections: USER CODE BEGIN & USER CODE END!**
 
 
-1. Copy template files to root directory of module.
-2. Configure CLI module for application needs. Configuration options are following:
+**1. Copy template files to root directory of module.**
+**2. Configure CLI module for application needs. Configuration options are following:**
 
 | Configuration | Description |
 | --- | --- |
-| **TH_HNDL_PERIOD_S** | Period of main thermistor handler in seconds. |
-| **TH_FILTER_EN** | Enable/Disable usage of filter module. |
-| **TH_SUPPLY_RIPPLE_COMP_EN** | Enable/Disable power supply ripple. |
-| **TH_SUPPLY_ADC_CH** | Power supply measurement ADC channel. |
-| **TH_SUPPLY_V** | Power supply voltage of thermistor sensing circuit. |
-| **TH_DEBUG_EN** | Enable/Disable debugging mode. |
-| **TH_ASSERT_EN** | Enable/Disable asserts. Shall be disabled in release build! |
-| **TH_DBG_PRINT** | Definition of debug print. |
-| **TH_ASSERT** | Definition of assert. |
+| **TH_HNDL_PERIOD_S**          | Period of main thermistor handler in seconds.                 |
+| **TH_FILTER_EN**              | Enable/Disable usage of filter module.                        |
+| **TH_SUPPLY_RIPPLE_COMP_EN**  | Enable/Disable power supply ripple.                           |
+| **TH_SUPPLY_ADC_CH**          | Power supply measurement ADC channel.                         |
+| **TH_SUPPLY_V**               | Power supply voltage of thermistor sensing circuit.           |
+| **TH_DEBUG_EN**               | Enable/Disable debugging mode.                                |
+| **TH_ASSERT_EN**              | Enable/Disable asserts. Shall be disabled in release build!   |
+| **TH_DBG_PRINT**              | Definition of debug print.                                    |
+| **TH_ASSERT**                 | Definition of assert.                                         |
 
-3. List all used thermistors inside *thermistor_cfg.h*:
+**3. List all used thermistors inside *thermistor_cfg.h*:**
 ```C
 /**
-*  Thermistor count
-*/
+ *  Thermistor channels
+ */
 typedef enum
 {
     // USER CODE BEGIN...
-    
-    eTH_NTC_INT = 0,
-    eTH_NTC_COMP,
-    eTH_PTC_AUX,
+	
+	eTH_NTC_BRIDGE = 0,
 
-    // USER CODE END...
+	// USER CODE END...
 
     eTH_NUM_OF
-} th_opt_t;
+} th_ch_t;
 ```
 
-4. Setup thermistor configurations inside *thermistor_cfg.c*:
+**4. Setup thermistor configurations inside *thermistor_cfg.c*:**
 
 ```C
 /**
@@ -291,59 +288,38 @@ static const th_cfg_t g_th_cfg[eTH_NUM_OF] =
 	// NTC Configurations
 	// ----------------------------------------------------------------------------------------------
 
-    [eTH_NTC_INT]	= 
+    [eTH_NTC_BRIDGE]	=
     {   
-        .adc_ch             = eADC_TEMP_INT,    
-        .hw_conn            = eTH_HW_LOW_SIDE, 
-        .hw_pull            = eTH_HW_PULL_UP, 
-        .pull_up            = 11e3f, 
-        .pull_down          = 0, 
-        .lpf_fc             = 1.0f,    
-        .type               = eTH_TYPE_NTC, 
-        .sensor.ntc.beta    = 3380.0f,
-        .sensor.ntc.nom_val = 10e3f,
-        .range.min          = -25.0f,
-        .range.max          = 150.0f,
-        .err_type           = eTH_ERR_FLOATING,
+        // ADC channel
+        .adc_ch = eADC_CH_BRIDGE_TEMP,
+
+        // HW configurations
+        .hw =
+        {
+            .conn      = eTH_HW_HIGH_SIDE,
+            .pull_mode = eTH_HW_PULL_DOWN,
+            .pull_up   = 0.0f,
+            .pull_down = 4.7e3f,
+        },
+
+        // NTC sensor
+        .type = eTH_TYPE_NTC,
+        .ntc =
+        {
+            .beta    = 3435.0f,      //25/85 degC
+            .nom_val = 10e3f,
+        },
+
+        // Valid range
+        .range =
+        {
+            .min = -25.0f,
+            .max = 150.0f,
+        },
+
+        .lpf_fc     = 1.0f,
+        .err_type   = eTH_ERR_FLOATING,
     },
-
-    [eTH_NTC_COMP]	= 
-    {   
-        .adc_ch             = eADC_TEMP_COMP,    
-        .hw_conn            = eTH_HW_LOW_SIDE, 
-        .hw_pull            = eTH_HW_PULL_UP, 
-        .pull_up            = 11e3f, 
-        .pull_down          = 0, 
-        .lpf_fc             = 1.0f,    
-        .type               = eTH_TYPE_NTC, 
-        .sensor.ntc.beta    = 3380.0f,
-        .sensor.ntc.nom_val = 10e3f,
-        .range.min          = -25.0f,
-        .range.max          = 150.0f,
-        .err_type           = eTH_ERR_FLOATING,
-    },
-
-    // ----------------------------------------------------------------------------------------------
-
-
-	// PT1000 Configurations
-	// ----------------------------------------------------------------------------------------------
-
-    [eTH_PTC_AUX]	= 
-    {   
-        .adc_ch             = eADC_TEMP_AUX,    
-        .hw_conn            = eTH_HW_LOW_SIDE, 
-        .hw_pull            = eTH_HW_PULL_UP, 
-        .pull_up            = 11e3f, 
-        .pull_down          = 0, 
-        .lpf_fc             = 1.0f,    
-        .type               = eTH_TYPE_PT1000, 
-        .range.min          = -25.0f,
-        .range.max          = 150.0f,
-        .err_type           = eTH_ERR_FLOATING,
-    },
-
-    // ----------------------------------------------------------------------------------------------
 
     // USER CODE END...
 };
@@ -351,7 +327,7 @@ static const th_cfg_t g_th_cfg[eTH_NUM_OF] =
 
 For hardware related configuration (*hw_conn* and *hw_pull*) help with picture above.
 
-5. Initialize thermistor module:
+**5. Initialize thermistor module:**
 ```C
 // Init thermistor
 if ( eTH_OK != th_init())
@@ -361,7 +337,7 @@ if ( eTH_OK != th_init())
 }
 ```
 
-6. Make sure to call *th_hndl()* at fixed period of *TH_HNDL_PERIOD_S* configurations:
+**6. Make sure to call *th_hndl()* at fixed period of *TH_HNDL_PERIOD_S* configurations:**
 ```C
 @at TH_HNDL_PERIOD_S period
 {
@@ -369,6 +345,3 @@ if ( eTH_OK != th_init())
     th_hndl();
 }
 ```
-
-
-
