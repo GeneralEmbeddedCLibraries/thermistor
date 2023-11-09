@@ -176,10 +176,11 @@ static float32_t th_get_vcc(void)
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_res_single_pull(const th_ch_t th)
 {
-    float32_t th_res = 0.0f;
+    float32_t th_res    = 0.0f;
+    float32_t vth       = 0.0f;
     
     // Get thermistor voltage
-    const float32_t vth = adc_get_real( gp_cfg_table[th].adc_ch );
+    adc_get_real( gp_cfg_table[th].adc_ch, &vth );
 
     // Get VCC voltage
     const float32_t vcc = th_get_vcc();
@@ -188,17 +189,17 @@ static float32_t th_calc_res_single_pull(const th_ch_t th)
     if (( vth < vcc ) && ( vth >= 0.0f ) && ( vcc > 0.0f ))
     {
         // Thermistor on low side
-        if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw_conn )
+        if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
         {
             // Thermistor on low side with pull-up
-            th_res = (float32_t) (( gp_cfg_table[th].pull_up * vth ) / ( vcc - vth ));
+            th_res = (float32_t) (( gp_cfg_table[th].hw.pull_up * vth ) / ( vcc - vth ));
         }
 
         // Thermistor on high side
         else
         {
             // Thermistor on high side with pull-down
-            th_res = (float32_t) ((( vcc - vth ) * gp_cfg_table[th].pull_down ) / vth );
+            th_res = (float32_t) ((( vcc - vth ) * gp_cfg_table[th].hw.pull_down ) / vth );
         } 
     }
     
@@ -223,10 +224,11 @@ static float32_t th_calc_res_single_pull(const th_ch_t th)
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_res_both_pull(const th_ch_t th)
 {
-    float32_t th_res = 0.0f;
+    float32_t th_res    = 0.0f;
+    float32_t vth       = 0.0f;
     
     // Get thermistor voltage
-    const float32_t vth = adc_get_real( gp_cfg_table[th].adc_ch );
+    adc_get_real( gp_cfg_table[th].adc_ch, &vth );
 
     // Get VCC voltage
     const float32_t vcc = th_get_vcc();
@@ -235,10 +237,10 @@ static float32_t th_calc_res_both_pull(const th_ch_t th)
     if (( vth < vcc ) && ( vth >= 0.0f ))
     {
         // Thermistor on low side
-        if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw_conn )
+        if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
         {
             // Thermistor on low side with both resistors
-            th_res = (float32_t) ((( vcc - vth ) / ( gp_cfg_table[th].pull_up * vth )) - ( 1.0f / gp_cfg_table[th].pull_down ));
+            th_res = (float32_t) ((( vcc - vth ) / ( gp_cfg_table[th].hw.pull_up * vth )) - ( 1.0f / gp_cfg_table[th].hw.pull_down ));
             
             // Check for division by zero
             if ( th_res > 0.0f )
@@ -258,7 +260,7 @@ static float32_t th_calc_res_both_pull(const th_ch_t th)
         else
         {   
             // Thermistor on low side with both resistors
-            th_res = (float32_t) ((( vcc - vth ) / ( gp_cfg_table[th].pull_down * vth )) - ( 1.0f / gp_cfg_table[th].pull_up ));
+            th_res = (float32_t) ((( vcc - vth ) / ( gp_cfg_table[th].hw.pull_down * vth )) - ( 1.0f / gp_cfg_table[th].hw.pull_up ));
             
             // Check for division by zero
             if ( th_res > 0.0f )
@@ -299,8 +301,8 @@ static float32_t th_calc_resistance(const th_ch_t th)
     float32_t th_res = 0.0f;
 
     // Single pull resistor
-    if  (   ( eTH_HW_PULL_UP    == gp_cfg_table[th].hw_pull )
-        ||  ( eTH_HW_PULL_DOWN  == gp_cfg_table[th].hw_pull ))
+    if  (   ( eTH_HW_PULL_UP    == gp_cfg_table[th].hw.pull_mode )
+        ||  ( eTH_HW_PULL_DOWN  == gp_cfg_table[th].hw.pull_mode ))
     {
         th_res = th_calc_res_single_pull( th );
     }
@@ -429,7 +431,7 @@ static float32_t th_calc_temperature(const th_ch_t th)
         switch( gp_cfg_table[th].type )
         {
             case eTH_TYPE_NTC:
-                temp = th_calc_ntc_temperature( g_th_data[th].res, gp_cfg_table[th].sensor.ntc.beta, gp_cfg_table[th].sensor.ntc.nom_val );
+                temp = th_calc_ntc_temperature( g_th_data[th].res, gp_cfg_table[th].ntc.beta, gp_cfg_table[th].ntc.nom_val );
                 break;
 
             case eTH_TYPE_PT1000:
