@@ -589,8 +589,8 @@ static th_status_t th_check_cfg_table(const th_cfg_t * const p_cfg)
                 &&  (   (( eTH_HW_LOW_SIDE == p_cfg[th].hw.conn )   && ( eTH_HW_PULL_UP == p_cfg[th].hw.pull_mode ))        // 2.
                     ||  (( eTH_HW_HIGH_SIDE == p_cfg[th].hw.conn )  && ( eTH_HW_PULL_DOWN == p_cfg[th].hw.pull_mode  ))
                     ||  (( eTH_HW_LOW_SIDE == p_cfg[th].hw.conn )   && ( eTH_HW_PULL_BOTH == p_cfg[th].hw.pull_mode  ))
-                    ||  (( eTH_HW_HIGH_SIDE == p_cfg[th].hw.conn )  && ( eTH_HW_PULL_BOTH == p_cfg[th].hw.pull_mode  )))    // 3.
-                &&  ( p_cfg[th].range.max > p_cfg[th].range.min ))
+                    ||  (( eTH_HW_HIGH_SIDE == p_cfg[th].hw.conn )  && ( eTH_HW_PULL_BOTH == p_cfg[th].hw.pull_mode  )))
+                &&  ( p_cfg[th].range.max > p_cfg[th].range.min ))                                                          // 3.
             {
                 // Valid config
             }
