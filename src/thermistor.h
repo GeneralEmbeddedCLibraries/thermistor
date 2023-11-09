@@ -28,7 +28,7 @@
 #include "../../thermistor_cfg.h"
 
 // ADC low level driver
-#include "drivers/peripheral/adc/adc.h"
+#include "drivers/peripheral/adc/adc/src/adc.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions

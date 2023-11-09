@@ -14,19 +14,18 @@ Picture bellow shows all supported NTC/PT1000 thermistor hardware connections:
 ![](doc/pic/ntc_calculations_2_hw_options.jpg)
 
 
-
 ## **Dependencies**
 
 ### **1. ADC Low Level driver**
 It is mandatory to have following definition of low level driver API:
  - Function to retriev voltage on pin in volts. Prototype function: 
     ```C 
-    float32_t adc_get_real (const adc_pins_t pin)
+    adc_status_t adc_get_real   (const adc_ch_t adc_ch, float32_t * const p_real)
     ```
 
 Additionally ADC low level driver must take following path:
 ```
-"root/drivers/periphery/adc/adc.h"
+"root/drivers/periphery/adc/adc/src/adc.h"
 ```
 
 ### **2. Filter module**
