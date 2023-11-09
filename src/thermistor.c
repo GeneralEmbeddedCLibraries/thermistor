@@ -158,7 +158,7 @@ static float32_t th_get_vcc(void)
     float32_t vcc = 0.0f;
 
     #if ( 1 == TH_SUPPLY_RIPPLE_COMP_EN )
-        vcc = adc_get_real( TH_SUPPLY_ADC_CH );
+        adc_get_real( TH_SUPPLY_ADC_CH, &vcc );
     #else
         vcc = (float32_t) ( TH_SUPPLY_V );
     #endif
