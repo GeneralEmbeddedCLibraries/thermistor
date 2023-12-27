@@ -178,30 +178,36 @@ static float32_t th_get_vcc(void)
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_res_single_pull(const th_ch_t th)
 {
-    float32_t th_res    = 0.0f;
-    float32_t vth       = 0.0f;
-    
-    // Get thermistor voltage
-    adc_get_real( gp_cfg_table[th].adc_ch, &vth );
+    float32_t   th_res  = 0.0f;
+    uint16_t    adc_raw = 0U;
 
-    // Get VCC voltage
-    const float32_t vcc = th_get_vcc();
+    // Get raw adc value
+    adc_get_raw( gp_cfg_table[th].adc_ch, &adc_raw );
+    
+    // Get adc maximum value
+    const uint16_t adc_max = adc_get_raw_max();
     
     // Check for valid voltage ranges
-    if (( vth < vcc ) && ( vth >= 0.0f ) && ( vcc > 0.0f ))
+    if ( adc_raw > 0U )
     {
         // Thermistor on low side
         if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
         {
             // Thermistor on low side with pull-up
-            th_res = (float32_t) (( gp_cfg_table[th].hw.pull_up * vth ) / ( vcc - vth ));
+            //th_res = (float32_t) (( gp_cfg_table[th].hw.pull_up * vth ) / ( vcc - vth ));
+
+
+            th_res = (float32_t) ( gp_cfg_table[th].hw.pull_up / (((float32_t)((float32_t) adc_max / (float32_t) adc_raw )) - 1.0f ));
         }
 
         // Thermistor on high side
         else
         {
             // Thermistor on high side with pull-down
-            th_res = (float32_t) ((( vcc - vth ) * gp_cfg_table[th].hw.pull_down ) / vth );
+            //th_res = (float32_t) ((( vcc - vth ) * gp_cfg_table[th].hw.pull_down ) / vth );
+
+
+            th_res = (float32_t) ( gp_cfg_table[th].hw.pull_down * (((float32_t)((float32_t) adc_max / (float32_t) adc_raw )) - 1.0f ));
         } 
     }
     
