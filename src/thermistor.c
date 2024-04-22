@@ -782,6 +782,38 @@ th_status_t th_hndl(void)
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
+* @brief        Get RAW temperature in ADC codes
+*
+* @param[in]    th      - Thermistor option
+* @param[out]   p_raw   - RAW temperature
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
+th_status_t th_get_raw(const th_ch_t th, uint16_t * const p_raw)
+{
+    th_status_t status = eTH_OK;
+
+    TH_ASSERT( true == gb_is_init );
+    TH_ASSERT( NULL != p_raw );
+    TH_ASSERT( th < eTH_NUM_OF );
+
+    if  (   ( true == gb_is_init )
+        &&  ( NULL != p_raw )
+        &&  ( th < eTH_NUM_OF ))
+    {
+        // Get raw adc value
+        adc_get_raw( gp_cfg_table[th].adc_ch, p_raw );
+    }
+    else
+    {
+        status = eTH_ERROR;
+    }
+
+    return status;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
 * @brief        Get temperature in deg C
 *
 * @param[in]    th      - Thermistor option

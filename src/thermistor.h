@@ -61,6 +61,7 @@ th_status_t th_deinit           (void);
 th_status_t th_is_init          (bool * const p_is_init);
 th_status_t th_hndl             (void);
 
+th_status_t th_get_raw          (const th_ch_t th, uint16_t * const p_raw);
 th_status_t th_get_degC         (const th_ch_t th, float32_t * const p_temp);
 th_status_t th_get_degF         (const th_ch_t th, float32_t * const p_temp);
 th_status_t th_get_kelvin       (const th_ch_t th, float32_t * const p_temp);
