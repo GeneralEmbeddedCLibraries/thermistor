@@ -178,59 +178,25 @@ static float32_t th_get_vcc(void)
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_res_single_pull(const th_ch_t th)
 {
-    float32_t   th_res      = 0.0f;
-    uint16_t    adc_raw     = 0U;
+    float32_t   th_res  = 0.0f;
+    uint16_t    adc_raw = 0U;
 
     // Get raw adc value
     adc_get_raw( gp_cfg_table[th].adc_ch, &adc_raw );
-    
-    // Get adc maximum value
-    const uint16_t adc_max = adc_get_raw_max();
 
     // Calculate ADC ratio
-    const float32_t adc_ratio = ((float32_t)((float32_t) adc_max / (float32_t) ( adc_raw + 1U )));
+    const float32_t adc_ratio = ((float32_t)((float32_t) adc_get_raw_max() / (float32_t) ( adc_raw + 1U )));
 
     // Thermistor on low side
     if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
     {
         th_res = (float32_t) ( gp_cfg_table[th].hw.pull_up / ( adc_ratio - 1.0f ));
-
-
-
-        // Thermistor on low side with pull-up
-        //th_res = (float32_t) (( gp_cfg_table[th].hw.pull_up * vth ) / ( vcc - vth ));
-        #if 0
-        if ( adc_raw > 0U )
-        {
-            th_res = (float32_t) ( gp_cfg_table[th].hw.pull_up / (((float32_t)((float32_t) adc_max / (float32_t) adc_raw )) - 1.0f ));
-        }
-
-        // ADC shorted to GND, neaning that resistance is very low
-        else
-        {
-            th_res = 0.0f;
-        }
-        #endif
     }
 
     // Thermistor on high side
     else
     {
         th_res = (float32_t) ( gp_cfg_table[th].hw.pull_down * ( adc_ratio - 1.0f ));
-
-        #if 0
-        // 
-        if ( adc_raw > 0U )
-        {
-            th_res = (float32_t) ( gp_cfg_table[th].hw.pull_down * (((float32_t)((float32_t) adc_max / (float32_t) adc_raw )) - 1.0f ));
-        }
-
-        // ADC open pin, infinite resistance
-        else
-        {
-            th_res = 1e6f;
-        }
-        #endif
     } 
     
     return th_res;     
