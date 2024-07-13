@@ -288,7 +288,8 @@ static float32_t th_calc_res_both_pull(const th_ch_t th)
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_resistance(const th_ch_t th)
 {
-    float32_t th_res = 0.0f;
+    float32_t th_res        = 0.0f;
+    float32_t th_res_lim    = 0.0f;
 
     // Single pull resistor
     if  (   ( eTH_HW_PULL_UP    == gp_cfg_table[th].hw.pull_mode )
@@ -303,7 +304,31 @@ static float32_t th_calc_resistance(const th_ch_t th)
         th_res = th_calc_res_both_pull( th );
     }
 
-    return th_res;
+    // Limit thermistor resistance
+    switch( gp_cfg_table[th].type )
+    {
+        case eTH_TYPE_NTC:
+            th_res_lim = th_limit_f32( th_res, 1.0f, 10e6f );
+            break;
+
+        case eTH_TYPE_PT100:
+            th_res_lim = th_limit_f32( th_res, TH_PT100_MIN_OHM, TH_PT100_MAX_OHM );
+            break;
+
+        case eTH_TYPE_PT500:
+            th_res_lim = th_limit_f32( th_res, TH_PT500_MIN_OHM, TH_PT500_MAX_OHM );
+            break;
+
+        case eTH_TYPE_PT1000:
+            th_res_lim = th_limit_f32( th_res, TH_PT1000_MIN_OHM, TH_PT1000_MAX_OHM );
+            break;
+
+        default:
+            TH_ASSERT( 0 );
+            break;
+    }
+
+    return th_res_lim;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -319,8 +344,6 @@ static float32_t th_calc_resistance(const th_ch_t th)
 static float32_t th_calc_ntc_temperature(const float32_t rth, const float32_t beta, const float32_t rth_nom)
 {
     float32_t temp = 0.0f;
-
-    TH_ASSERT( rth_nom > 0.0f );
 
     // Calculate temperature
     temp = (float32_t) (( 1.0f / ( TH_NTC_25DEG_FACTOR + (( 1.0f / beta ) * log( rth / rth_nom )))) - 273.15f );
@@ -343,11 +366,8 @@ static float32_t th_calc_pt100_temperature(const float32_t rth)
 {
     float32_t temp  = 0.0f;
 
-    // Limit termistor resistance
-    const float32_t rth_lim = th_limit_f32( rth, TH_PT100_MIN_OHM, TH_PT100_MAX_OHM );
-
     // Calculate temperature
-    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth_lim / 100.0f ))) / TH_PT_DIN_EN60751_2B );
+    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth / 100.0f ))) / TH_PT_DIN_EN60751_2B );
     
     return temp;
 }
@@ -367,11 +387,8 @@ static float32_t th_calc_pt500_temperature(const float32_t rth)
 {
     float32_t temp  = 0.0f;
 
-    // Limit termistor resistance
-    const float32_t rth_lim = th_limit_f32( rth, TH_PT500_MIN_OHM, TH_PT500_MAX_OHM );
-
     // Calculate temperature
-    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth_lim / 500.0f ))) / TH_PT_DIN_EN60751_2B );
+    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth / 500.0f ))) / TH_PT_DIN_EN60751_2B );
     
     return temp;
 }
@@ -391,11 +408,8 @@ static float32_t th_calc_pt1000_temperature(const float32_t rth)
 {
     float32_t temp  = 0.0f;
 
-    // Limit termistor resistance
-    const float32_t rth_lim = th_limit_f32( rth, TH_PT1000_MIN_OHM, TH_PT1000_MAX_OHM );
-
     // Calculate temperature
-    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth_lim / 1000.0f ))) / TH_PT_DIN_EN60751_2B );
+    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth / 1000.0f ))) / TH_PT_DIN_EN60751_2B );
     
     return temp;
 }
