@@ -1071,6 +1071,35 @@ th_status_t th_get_status(const th_ch_t th)
         return status;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+    /*!
+    * @brief        Reset LPF filter
+    *
+    * @param[in]    th      - Thermistor option
+    * @param[in]    temp    - Temperature value to reset to
+    * @return       status  - Status of operation
+    */
+    ////////////////////////////////////////////////////////////////////////////////
+    th_status_t th_reset_lpf(const th_ch_t th, const float32_t temp)
+    {
+        th_status_t status = eTH_OK;
+
+        TH_ASSERT( true == gb_is_init );
+        TH_ASSERT( th < eTH_NUM_OF );
+
+        if  (   ( true == gb_is_init )
+            &&  ( th < eTH_NUM_OF ))
+        {
+            (void) filter_rc_reset( g_th_data[th].lpf, temp );
+        }
+        else
+        {
+            status = eTH_ERROR;
+        }
+
+        return status;
+    }
+
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////

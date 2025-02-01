@@ -74,6 +74,7 @@ th_status_t th_get_status       (const th_ch_t th);
     th_status_t th_get_kelvin_filt  (const th_ch_t th, float32_t * const p_temp);
     th_status_t th_set_lpf_fc       (const th_ch_t th, const float32_t fc);
     th_status_t th_get_lpf_fc       (const th_ch_t th, float32_t * const p_fc);
+    th_status_t th_reset_lpf        (const th_ch_t th, const float32_t temp);
 #endif
 
 #endif // __THERMISTOR_H
