@@ -5,6 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project/module adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## V1.2.0 - 01.02.2025
+
+### Added
+ - Added API to reset LPF to wanted temperature
+
+### Changed
+ - General single pull resistor config doesn't need voltage reference anymore (using radiometric measurement technique)
+ - Changed single pull resistor calculations
+
+### Todo
+ - Thermistor status check testing
+ - Adoption to analog module
+ - Removing filter from thermistor and moving it into analog
+ - Implementatiom for both pull-up and pull-down configuration is missing
+
+---
 ## V1.1.0 - 09.11.2023
 
 ### Added

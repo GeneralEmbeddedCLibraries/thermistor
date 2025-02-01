@@ -9,6 +9,14 @@ Supported thermistors HW topologies:
  - PT100/500/1000 with pull-down resistor
  - PT100/500/1000 with pull-up resistor
  - PT100/500/1000 both pull-down and pull-up resistor
+ 
+# 🚨 NOTICE 🚨  
+
+The following code **expects that the resistor divider is supplied with the same voltage as the ADC reference voltage (Vref = Vcc).**  
+
+⚠️ **If Vref and the resistor divider supply voltage are different, all calculations will be incorrect!**  
+Make sure that **Vcc (divider supply) = Vref (ADC reference)** before using this code.
+
 
 Picture bellow shows all supported NTC/PT1000 thermistor hardware connections:
 ![](doc/pic/ntc_calculations_2_hw_options.jpg)
@@ -226,6 +234,7 @@ If filter is enabled (*TH_FILTER_EN* = 1) then following API is also available:
 | **th_get_kelvin_filt**    | Get LPF filtered temperature in kelvin    | th_status_t th_get_kelvin_filt(const th_ch_t th, float32_t * const p_temp) | 
 | **th_set_lpf_fc**         | Change LPF cutoff frequency               | th_status_t th_set_lpf_fc(const th_ch_t th, const float32_t fc) | 
 | **th_get_lpf_fc**         | Get LPF cutoff frequency                  | th_status_t th_get_lpf_fc(const th_ch_t th, float32_t * const p_fc) | 
+| **th_reset_lpf**          | Reset LPF 								| th_status_t th_reset_lpf(const th_ch_t th, const float32_t temp) | 
 
 
 ## **Usage**
@@ -240,9 +249,6 @@ If filter is enabled (*TH_FILTER_EN* = 1) then following API is also available:
 | --- | --- |
 | **TH_HNDL_PERIOD_S**          | Period of main thermistor handler in seconds.                 |
 | **TH_FILTER_EN**              | Enable/Disable usage of filter module.                        |
-| **TH_SUPPLY_RIPPLE_COMP_EN**  | Enable/Disable power supply ripple.                           |
-| **TH_SUPPLY_ADC_CH**          | Power supply measurement ADC channel.                         |
-| **TH_SUPPLY_V**               | Power supply voltage of thermistor sensing circuit.           |
 | **TH_DEBUG_EN**               | Enable/Disable debugging mode.                                |
 | **TH_ASSERT_EN**              | Enable/Disable asserts. Shall be disabled in release build!   |
 | **TH_DBG_PRINT**              | Definition of debug print.                                    |

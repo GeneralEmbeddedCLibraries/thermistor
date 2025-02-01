@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Ziga Miklosic
+// Copyright (c) 2025 Ziga Miklosic
 // All Rights Reserved
 // This software is under MIT licence (https://opensource.org/licenses/MIT)
 ////////////////////////////////////////////////////////////////////////////////
@@ -7,8 +7,8 @@
 *@brief     Thermistor measurement and processing
 *@author    Ziga Miklosic
 *@email     ziga.miklosic@gmail.com
-*@date      09.11.2023
-*@version   V1.1.0
+*@date      01.02.2025
+*@version   V1.2.0
 */
 ////////////////////////////////////////////////////////////////////////////////
 /*!
@@ -122,7 +122,6 @@ static th_data_t g_th_data[eTH_NUM_OF] = {0};
 ////////////////////////////////////////////////////////////////////////////////
 // Function Prototypes
 ////////////////////////////////////////////////////////////////////////////////
-static float32_t    th_get_vcc                  (void);
 static float32_t    th_calc_res_single_pull     (const th_ch_t th);
 static float32_t    th_calc_res_both_pull       (const th_ch_t th);
 static float32_t    th_calc_resistance          (const th_ch_t th);
@@ -142,35 +141,7 @@ static inline float32_t th_limit_f32            (const float32_t in, const float
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
-* @brief        Get thermistor power supply (VCC) potencial
-*
-* @note     Based on "THERMISTOR_SUPPLY_RIPPLE_COMP_EN" macro definition function 
-*           returns:
-*               
-*               ENABLE  - Measured power supply voltage in V
-*               DISABLE - Constant value of macro "THERMISTOR_SUPPLY_V"
-*
-* @return       res - Resistance of thermistor
-*/
-////////////////////////////////////////////////////////////////////////////////
-static float32_t th_get_vcc(void)
-{
-    float32_t vcc = 0.0f;
-
-    #if ( 1 == TH_SUPPLY_RIPPLE_COMP_EN )
-        adc_get_real( TH_SUPPLY_ADC_CH, &vcc );
-    #else
-        vcc = (float32_t) ( TH_SUPPLY_V );
-    #endif
-
-    return vcc;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/*!
 * @brief        Calculate resistance of thermistor with single pull resistor
-*
-* @note     In case of unplasible voltage -1 is returned!
 *
 * @param[in]    th  - Thermistor option
 * @return       res - Resistance of thermistor
@@ -178,37 +149,39 @@ static float32_t th_get_vcc(void)
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_res_single_pull(const th_ch_t th)
 {
-    float32_t th_res    = 0.0f;
-    float32_t vth       = 0.0f;
-    
-    // Get thermistor voltage
-    adc_get_real( gp_cfg_table[th].adc_ch, &vth );
+    float32_t   th_res  = 0.0f;
+    uint16_t    adc_raw = 0U;
 
-    // Get VCC voltage
-    const float32_t vcc = th_get_vcc();
-    
-    // Check for valid voltage ranges
-    if (( vth < vcc ) && ( vth >= 0.0f ) && ( vcc > 0.0f ))
+    // Get raw adc value
+    adc_get_raw( gp_cfg_table[th].adc_ch, &adc_raw );
+
+    // Calculate ADC ratio
+    const float32_t adc_ratio = ((float32_t)((float32_t) adc_get_raw_max() / (float32_t) ( adc_raw + 1U ))); // +1 to prevent dividing by zero!
+
+    // Thermistor on low side
+    if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
     {
-        // Thermistor on low side
-        if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
+        if ( adc_ratio < 1.0f )
         {
-            // Thermistor on low side with pull-up
-            th_res = (float32_t) (( gp_cfg_table[th].hw.pull_up * vth ) / ( vcc - vth ));
+            th_res = (float32_t) ( gp_cfg_table[th].hw.pull_up / ( adc_ratio - 1.0f ));
         }
-
-        // Thermistor on high side
         else
         {
-            // Thermistor on high side with pull-down
-            th_res = (float32_t) ((( vcc - vth ) * gp_cfg_table[th].hw.pull_down ) / vth );
-        } 
+            th_res = 1e6f;  // ADC ration is above 1 means Rth is very high!
+        }
     }
-    
-    // Unplausible voltage
+
+    // Thermistor on high side
     else
     {
-        th_res = -1.0f;
+        if ( adc_ratio < 1.0f )
+        {
+            th_res = (float32_t) ( gp_cfg_table[th].hw.pull_down * ( adc_ratio - 1.0f ));
+        }
+        else
+        {
+            th_res = 0.0f;  // ADC ration is above 1 means Rth is 0 ohm!
+        }
     } 
     
     return th_res;     
@@ -218,8 +191,6 @@ static float32_t th_calc_res_single_pull(const th_ch_t th)
 /*!
 * @brief        Calculate resistance of thermistor with both pull resistors
 *
-* @note     In case of unplasible voltage -1 is returned!
-*
 * @param[in]    th  - Thermistor option
 * @return       res - Resistance of thermistor
 */
@@ -227,63 +198,9 @@ static float32_t th_calc_res_single_pull(const th_ch_t th)
 static float32_t th_calc_res_both_pull(const th_ch_t th)
 {
     float32_t th_res    = 0.0f;
-    float32_t vth       = 0.0f;
-    
-    // Get thermistor voltage
-    adc_get_real( gp_cfg_table[th].adc_ch, &vth );
 
-    // Get VCC voltage
-    const float32_t vcc = th_get_vcc();
-    
-    // Check for valid voltage ranges
-    if (( vth < vcc ) && ( vth >= 0.0f ))
-    {
-        // Thermistor on low side
-        if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
-        {
-            // Thermistor on low side with both resistors
-            th_res = (float32_t) ((( vcc - vth ) / ( gp_cfg_table[th].hw.pull_up * vth )) - ( 1.0f / gp_cfg_table[th].hw.pull_down ));
-            
-            // Check for division by zero
-            if ( th_res > 0.0f )
-            {
-                th_res = (float32_t)( 1.0f / th_res );
-            }
-
-            //  TODO: Check what to do if that happens. Might happen in real circuit under specific circuitstainces...
-            else
-            {
-                TH_DBG_PRINT( "TH: Unhandler event..." );
-                TH_ASSERT( 0 );
-            }
-        }
-
-        // Thermistor on high side
-        else
-        {   
-            // Thermistor on low side with both resistors
-            th_res = (float32_t) ((( vcc - vth ) / ( gp_cfg_table[th].hw.pull_down * vth )) - ( 1.0f / gp_cfg_table[th].hw.pull_up ));
-            
-            // Check for division by zero
-            if ( th_res > 0.0f )
-            {
-                th_res = (float32_t)( 1.0f / th_res );
-            }
-
-            //  TODO: Check what to do if that happens. Might happen in real circuit under specific circuitstainces...
-            else
-            {
-                TH_DBG_PRINT( "TH: Unhandler event..." );
-                TH_ASSERT( 0 );
-            } 
-        } 
-    }
-    
-    // Unplausible voltage
-    else
-    {
-        th_res = -1.0f;
-    } 
+    // TODO: Implementation needed!
+    (void) th;
     
     return th_res;     
 }
@@ -300,7 +217,8 @@ static float32_t th_calc_res_both_pull(const th_ch_t th)
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_resistance(const th_ch_t th)
 {
-    float32_t th_res = 0.0f;
+    float32_t th_res        = 0.0f;
+    float32_t th_res_lim    = 0.0f;
 
     // Single pull resistor
     if  (   ( eTH_HW_PULL_UP    == gp_cfg_table[th].hw.pull_mode )
@@ -315,7 +233,31 @@ static float32_t th_calc_resistance(const th_ch_t th)
         th_res = th_calc_res_both_pull( th );
     }
 
-    return th_res;
+    // Limit thermistor resistance
+    switch( gp_cfg_table[th].type )
+    {
+        case eTH_TYPE_NTC:
+            th_res_lim = th_limit_f32( th_res, 1.0f, 10e6f );
+            break;
+
+        case eTH_TYPE_PT100:
+            th_res_lim = th_limit_f32( th_res, TH_PT100_MIN_OHM, TH_PT100_MAX_OHM );
+            break;
+
+        case eTH_TYPE_PT500:
+            th_res_lim = th_limit_f32( th_res, TH_PT500_MIN_OHM, TH_PT500_MAX_OHM );
+            break;
+
+        case eTH_TYPE_PT1000:
+            th_res_lim = th_limit_f32( th_res, TH_PT1000_MIN_OHM, TH_PT1000_MAX_OHM );
+            break;
+
+        default:
+            TH_ASSERT( 0 );
+            break;
+    }
+
+    return th_res_lim;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -331,8 +273,6 @@ static float32_t th_calc_resistance(const th_ch_t th)
 static float32_t th_calc_ntc_temperature(const float32_t rth, const float32_t beta, const float32_t rth_nom)
 {
     float32_t temp = 0.0f;
-
-    TH_ASSERT( rth_nom > 0.0f );
 
     // Calculate temperature
     temp = (float32_t) (( 1.0f / ( TH_NTC_25DEG_FACTOR + (( 1.0f / beta ) * log( rth / rth_nom )))) - 273.15f );
@@ -355,11 +295,8 @@ static float32_t th_calc_pt100_temperature(const float32_t rth)
 {
     float32_t temp  = 0.0f;
 
-    // Limit termistor resistance
-    const float32_t rth_lim = th_limit_f32( rth, TH_PT100_MIN_OHM, TH_PT100_MAX_OHM );
-
     // Calculate temperature
-    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth_lim / 100.0f ))) / TH_PT_DIN_EN60751_2B );
+    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth / 100.0f ))) / TH_PT_DIN_EN60751_2B );
     
     return temp;
 }
@@ -379,11 +316,8 @@ static float32_t th_calc_pt500_temperature(const float32_t rth)
 {
     float32_t temp  = 0.0f;
 
-    // Limit termistor resistance
-    const float32_t rth_lim = th_limit_f32( rth, TH_PT500_MIN_OHM, TH_PT500_MAX_OHM );
-
     // Calculate temperature
-    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth_lim / 500.0f ))) / TH_PT_DIN_EN60751_2B );
+    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth / 500.0f ))) / TH_PT_DIN_EN60751_2B );
     
     return temp;
 }
@@ -403,11 +337,8 @@ static float32_t th_calc_pt1000_temperature(const float32_t rth)
 {
     float32_t temp  = 0.0f;
 
-    // Limit termistor resistance
-    const float32_t rth_lim = th_limit_f32( rth, TH_PT1000_MIN_OHM, TH_PT1000_MAX_OHM );
-
     // Calculate temperature
-    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth_lim / 1000.0f ))) / TH_PT_DIN_EN60751_2B );
+    temp = (float32_t) (( -TH_PT_DIN_EN60751_A + sqrtf( TH_PT_DIN_EN60751_AA - TH_PT_DIN_EN60751_4B * ( 1 - rth / 1000.0f ))) / TH_PT_DIN_EN60751_2B );
     
     return temp;
 }
@@ -427,31 +358,28 @@ static float32_t th_calc_temperature(const th_ch_t th)
     // Calculate thermistor resistance
     g_th_data[th].res = th_calc_resistance( th );
 
-    if ( g_th_data[th].res > 0.0f )
+    // Sensor type
+    switch( gp_cfg_table[th].type )
     {
-        // Sensor type
-        switch( gp_cfg_table[th].type )
-        {
-            case eTH_TYPE_NTC:
-                temp = th_calc_ntc_temperature( g_th_data[th].res, gp_cfg_table[th].ntc.beta, gp_cfg_table[th].ntc.nom_val );
-                break;
+        case eTH_TYPE_NTC:
+            temp = th_calc_ntc_temperature( g_th_data[th].res, gp_cfg_table[th].ntc.beta, gp_cfg_table[th].ntc.nom_val );
+            break;
 
-            case eTH_TYPE_PT1000:
-                temp = th_calc_pt1000_temperature( g_th_data[th].res );
-                break;
+        case eTH_TYPE_PT1000:
+            temp = th_calc_pt1000_temperature( g_th_data[th].res );
+            break;
 
-            case eTH_TYPE_PT100:
-                temp = th_calc_pt100_temperature( g_th_data[th].res );
-                break;
+        case eTH_TYPE_PT100:
+            temp = th_calc_pt100_temperature( g_th_data[th].res );
+            break;
 
-            case eTH_TYPE_PT500:
-                temp = th_calc_pt500_temperature( g_th_data[th].res );
-                break;
+        case eTH_TYPE_PT500:
+            temp = th_calc_pt500_temperature( g_th_data[th].res );
+            break;
 
-            default:
-                TH_ASSERT( 0 );
-                break;
-        }
+        default:
+            TH_ASSERT( 0 );
+            break;
     }
 
     return temp;
@@ -665,7 +593,7 @@ static inline float32_t th_limit_f32(const float32_t in, const float32_t min, co
 ////////////////////////////////////////////////////////////////////////////////
 th_status_t th_init(void)
 {
-    th_status_t status    = eTH_OK;
+    th_status_t status = eTH_OK;
 
     if ( false == gb_is_init )
     {
@@ -739,7 +667,7 @@ th_status_t th_deinit(void)
 * @return       status      - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t    th_is_init(bool * const p_is_init)
+th_status_t th_is_init(bool * const p_is_init)
 {
     th_status_t status = eTH_OK;
 
@@ -786,6 +714,38 @@ th_status_t th_hndl(void)
             // Check status on filtered temperature
             g_th_data[th].status = th_status_hndl( th, g_th_data[th].temp_filt );
         }
+    }
+    else
+    {
+        status = eTH_ERROR;
+    }
+
+    return status;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/*!
+* @brief        Get RAW temperature in ADC codes
+*
+* @param[in]    th      - Thermistor option
+* @param[out]   p_raw   - RAW temperature
+* @return       status  - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
+th_status_t th_get_raw(const th_ch_t th, uint16_t * const p_raw)
+{
+    th_status_t status = eTH_OK;
+
+    TH_ASSERT( true == gb_is_init );
+    TH_ASSERT( NULL != p_raw );
+    TH_ASSERT( th < eTH_NUM_OF );
+
+    if  (   ( true == gb_is_init )
+        &&  ( NULL != p_raw )
+        &&  ( th < eTH_NUM_OF ))
+    {
+        // Get raw adc value
+        adc_get_raw( gp_cfg_table[th].adc_ch, p_raw );
     }
     else
     {
@@ -1102,6 +1062,35 @@ th_status_t th_get_status(const th_ch_t th)
             &&  ( th < eTH_NUM_OF ))
         {
             (void) filter_rc_fc_get( g_th_data[th].lpf, p_fc );
+        }
+        else
+        {
+            status = eTH_ERROR;
+        }
+
+        return status;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    /*!
+    * @brief        Reset LPF filter
+    *
+    * @param[in]    th      - Thermistor option
+    * @param[in]    temp    - Temperature value to reset to
+    * @return       status  - Status of operation
+    */
+    ////////////////////////////////////////////////////////////////////////////////
+    th_status_t th_reset_lpf(const th_ch_t th, const float32_t temp)
+    {
+        th_status_t status = eTH_OK;
+
+        TH_ASSERT( true == gb_is_init );
+        TH_ASSERT( th < eTH_NUM_OF );
+
+        if  (   ( true == gb_is_init )
+            &&  ( th < eTH_NUM_OF ))
+        {
+            (void) filter_rc_reset( g_th_data[th].lpf, temp );
         }
         else
         {
