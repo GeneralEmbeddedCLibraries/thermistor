@@ -7,9 +7,6 @@ and this project/module adheres to [Semantic Versioning](https://semver.org/spec
 ---
 ## V1.2.0 - 01.02.2025
 
-### Added
- - 
-
 ### Changed
  - Changed single pull resistor calculations, now reference is not needed anymore
 

@@ -9,6 +9,14 @@ Supported thermistors HW topologies:
  - PT100/500/1000 with pull-down resistor
  - PT100/500/1000 with pull-up resistor
  - PT100/500/1000 both pull-down and pull-up resistor
+ 
+# 🚨 NOTICE 🚨  
+
+The following code **expects that the resistor divider is supplied with the same voltage as the ADC reference voltage (Vref = Vcc).**  
+
+⚠️ **If Vref and the resistor divider supply voltage are different, all calculations will be incorrect!**  
+Make sure that **Vcc (divider supply) = Vref (ADC reference)** before using this code.
+
 
 Picture bellow shows all supported NTC/PT1000 thermistor hardware connections:
 ![](doc/pic/ntc_calculations_2_hw_options.jpg)
