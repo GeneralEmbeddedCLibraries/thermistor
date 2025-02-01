@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Ziga Miklosic
+// Copyright (c) 2025 Ziga Miklosic
 // All Rights Reserved
 // This software is under MIT licence (https://opensource.org/licenses/MIT)
 ////////////////////////////////////////////////////////////////////////////////
@@ -7,8 +7,8 @@
 *@brief     Thermistor measurement and processing
 *@author    Ziga Miklosic
 *@email     ziga.miklosic@gmail.com
-*@date      09.11.2023
-*@version   V1.1.0
+*@date      01.02.2025
+*@version   V1.2.0
 */
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -39,7 +39,7 @@
  *     Module version
  */
 #define TH_VER_MAJOR        ( 1 )
-#define TH_VER_MINOR        ( 1 )
+#define TH_VER_MINOR        ( 2 )
 #define TH_VER_DEVELOP      ( 0 )
 
 /**
@@ -74,6 +74,7 @@ th_status_t th_get_status       (const th_ch_t th);
     th_status_t th_get_kelvin_filt  (const th_ch_t th, float32_t * const p_temp);
     th_status_t th_set_lpf_fc       (const th_ch_t th, const float32_t fc);
     th_status_t th_get_lpf_fc       (const th_ch_t th, float32_t * const p_fc);
+    th_status_t th_reset_lpf        (const th_ch_t th, const float32_t temp);
 #endif
 
 #endif // __THERMISTOR_H

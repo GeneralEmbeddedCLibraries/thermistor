@@ -7,8 +7,12 @@ and this project/module adheres to [Semantic Versioning](https://semver.org/spec
 ---
 ## V1.2.0 - 01.02.2025
 
+### Added
+ - Added API to reset LPF to wanted temperature
+
 ### Changed
- - Changed single pull resistor calculations, now reference is not needed anymore
+ - General single pull resistor config doesn't need voltage reference anymore (using radiometric measurement technique)
+ - Changed single pull resistor calculations
 
 ### Todo
  - Thermistor status check testing
