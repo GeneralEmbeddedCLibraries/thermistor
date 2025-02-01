@@ -240,9 +240,6 @@ If filter is enabled (*TH_FILTER_EN* = 1) then following API is also available:
 | --- | --- |
 | **TH_HNDL_PERIOD_S**          | Period of main thermistor handler in seconds.                 |
 | **TH_FILTER_EN**              | Enable/Disable usage of filter module.                        |
-| **TH_SUPPLY_RIPPLE_COMP_EN**  | Enable/Disable power supply ripple.                           |
-| **TH_SUPPLY_ADC_CH**          | Power supply measurement ADC channel.                         |
-| **TH_SUPPLY_V**               | Power supply voltage of thermistor sensing circuit.           |
 | **TH_DEBUG_EN**               | Enable/Disable debugging mode.                                |
 | **TH_ASSERT_EN**              | Enable/Disable asserts. Shall be disabled in release build!   |
 | **TH_DBG_PRINT**              | Definition of debug print.                                    |

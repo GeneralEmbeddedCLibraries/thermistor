@@ -122,7 +122,6 @@ static th_data_t g_th_data[eTH_NUM_OF] = {0};
 ////////////////////////////////////////////////////////////////////////////////
 // Function Prototypes
 ////////////////////////////////////////////////////////////////////////////////
-static float32_t    th_get_vcc                  (void);
 static float32_t    th_calc_res_single_pull     (const th_ch_t th);
 static float32_t    th_calc_res_both_pull       (const th_ch_t th);
 static float32_t    th_calc_resistance          (const th_ch_t th);
@@ -142,35 +141,7 @@ static inline float32_t th_limit_f32            (const float32_t in, const float
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
-* @brief        Get thermistor power supply (VCC) potencial
-*
-* @note     Based on "THERMISTOR_SUPPLY_RIPPLE_COMP_EN" macro definition function 
-*           returns:
-*               
-*               ENABLE  - Measured power supply voltage in V
-*               DISABLE - Constant value of macro "THERMISTOR_SUPPLY_V"
-*
-* @return       res - Resistance of thermistor
-*/
-////////////////////////////////////////////////////////////////////////////////
-static float32_t th_get_vcc(void)
-{
-    float32_t vcc = 0.0f;
-
-    #if ( 1 == TH_SUPPLY_RIPPLE_COMP_EN )
-        adc_get_real( TH_SUPPLY_ADC_CH, &vcc );
-    #else
-        vcc = (float32_t) ( TH_SUPPLY_V );
-    #endif
-
-    return vcc;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/*!
 * @brief        Calculate resistance of thermistor with single pull resistor
-*
-* @note     In case of unplasible voltage -1 is returned!
 *
 * @param[in]    th  - Thermistor option
 * @return       res - Resistance of thermistor
@@ -185,18 +156,32 @@ static float32_t th_calc_res_single_pull(const th_ch_t th)
     adc_get_raw( gp_cfg_table[th].adc_ch, &adc_raw );
 
     // Calculate ADC ratio
-    const float32_t adc_ratio = ((float32_t)((float32_t) adc_get_raw_max() / (float32_t) ( adc_raw + 1U )));
+    const float32_t adc_ratio = ((float32_t)((float32_t) adc_get_raw_max() / (float32_t) ( adc_raw + 1U ))); // +1 to prevent dividing by zero!
 
     // Thermistor on low side
     if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
     {
-        th_res = (float32_t) ( gp_cfg_table[th].hw.pull_up / ( adc_ratio - 1.0f ));
+        if ( adc_ratio < 1.0f )
+        {
+            th_res = (float32_t) ( gp_cfg_table[th].hw.pull_up / ( adc_ratio - 1.0f ));
+        }
+        else
+        {
+            th_res = 1e6f;  // ADC ration is above 1 means Rth is very high!
+        }
     }
 
     // Thermistor on high side
     else
     {
-        th_res = (float32_t) ( gp_cfg_table[th].hw.pull_down * ( adc_ratio - 1.0f ));
+        if ( adc_ratio < 1.0f )
+        {
+            th_res = (float32_t) ( gp_cfg_table[th].hw.pull_down * ( adc_ratio - 1.0f ));
+        }
+        else
+        {
+            th_res = 0.0f;  // ADC ration is above 1 means Rth is 0 ohm!
+        }
     } 
     
     return th_res;     
@@ -206,8 +191,6 @@ static float32_t th_calc_res_single_pull(const th_ch_t th)
 /*!
 * @brief        Calculate resistance of thermistor with both pull resistors
 *
-* @note     In case of unplasible voltage -1 is returned!
-*
 * @param[in]    th  - Thermistor option
 * @return       res - Resistance of thermistor
 */
@@ -215,63 +198,9 @@ static float32_t th_calc_res_single_pull(const th_ch_t th)
 static float32_t th_calc_res_both_pull(const th_ch_t th)
 {
     float32_t th_res    = 0.0f;
-    float32_t vth       = 0.0f;
-    
-    // Get thermistor voltage
-    adc_get_real( gp_cfg_table[th].adc_ch, &vth );
 
-    // Get VCC voltage
-    const float32_t vcc = th_get_vcc();
-    
-    // Check for valid voltage ranges
-    if (( vth < vcc ) && ( vth >= 0.0f ))
-    {
-        // Thermistor on low side
-        if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
-        {
-            // Thermistor on low side with both resistors
-            th_res = (float32_t) ((( vcc - vth ) / ( gp_cfg_table[th].hw.pull_up * vth )) - ( 1.0f / gp_cfg_table[th].hw.pull_down ));
-            
-            // Check for division by zero
-            if ( th_res > 0.0f )
-            {
-                th_res = (float32_t)( 1.0f / th_res );
-            }
-
-            //  TODO: Check what to do if that happens. Might happen in real circuit under specific circuitstainces...
-            else
-            {
-                TH_DBG_PRINT( "TH: Unhandler event..." );
-                TH_ASSERT( 0 );
-            }
-        }
-
-        // Thermistor on high side
-        else
-        {   
-            // Thermistor on low side with both resistors
-            th_res = (float32_t) ((( vcc - vth ) / ( gp_cfg_table[th].hw.pull_down * vth )) - ( 1.0f / gp_cfg_table[th].hw.pull_up ));
-            
-            // Check for division by zero
-            if ( th_res > 0.0f )
-            {
-                th_res = (float32_t)( 1.0f / th_res );
-            }
-
-            //  TODO: Check what to do if that happens. Might happen in real circuit under specific circuitstainces...
-            else
-            {
-                TH_DBG_PRINT( "TH: Unhandler event..." );
-                TH_ASSERT( 0 );
-            } 
-        } 
-    }
-    
-    // Unplausible voltage
-    else
-    {
-        th_res = -1.0f;
-    } 
+    // TODO: Implementation needed!
+    (void) th;
     
     return th_res;     
 }
@@ -664,7 +593,7 @@ static inline float32_t th_limit_f32(const float32_t in, const float32_t min, co
 ////////////////////////////////////////////////////////////////////////////////
 th_status_t th_init(void)
 {
-    th_status_t status    = eTH_OK;
+    th_status_t status = eTH_OK;
 
     if ( false == gb_is_init )
     {

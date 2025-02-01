@@ -49,7 +49,10 @@ typedef enum
 {
     // USER CODE BEGIN...
 	
-	eTH_NTC_BRIDGE = 0,
+	eTH_ELEV_BRIDGE = 0,    /**<Elevator power stage NTC */
+	eTH_DEL_BRIDGE,         /**<Delivery power stage NTC */
+	eTH_SLIDER_BRIDGE,      /**<Slider power stage NTC */
+	eTH_AMBIENT,            /**<Ambient NTC */
 
 	// USER CODE END...
 
@@ -67,38 +70,6 @@ typedef enum
  *  Enable/Disable usage of Filter module  
  */
 #define TH_FILTER_EN                                ( 1 )
-
-/**
- *  Enable/Disable power supply ripple
- *
- *  @note   Enabling power supply ripple compensation algorithm demands in first hand
- *          to measure power supply potencial!
- *
- *          When enabled ADC channel of power supply measurement needs to be provided!
- */
-#define TH_SUPPLY_RIPPLE_COMP_EN                    ( 0 )
-
-#if ( 1 == TH_SUPPLY_RIPPLE_COMP_EN )
-
-    /**
-     *  Power supply measurement ADC channel
-     *
-     *  @note   When power supply ripple compensation algorithm is enabled
-     *          ADC channel of power supply measurement needs to be provided!
-     */
-    #define TH_SUPPLY_ADC_CH                        ( eADC_BAT )
-    
-#else
-
-    /**
-     *  Power supply voltage of thermistor sensing circuit
-     *
-     *  @note   Power supply measurement is not supported! Provide nominal
-     *          value of thermistor sensing supply voltage in volts.
-     */
-    #define TH_SUPPLY_V                             ( 3.30f )
-
-#endif
 
 /**
  * 	Enable/Disable debug mode
