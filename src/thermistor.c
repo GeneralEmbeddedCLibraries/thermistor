@@ -161,26 +161,26 @@ static float32_t th_calc_res_single_pull(const th_ch_t th)
     // Thermistor on low side
     if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
     {
-        if ( adc_ratio < 1.0f )
+        if ( adc_ratio > 1.0f )
         {
-            th_res = (float32_t) ( gp_cfg_table[th].hw.pull_up / ( adc_ratio - 1.0f ));
+            th_res = (float32_t)( gp_cfg_table[th].hw.pull_up / ( adc_ratio - 1.0f ));
         }
         else
         {
-            th_res = 1e6f;  // ADC ration is above 1 means Rth is very high!
+            th_res = 1e6f;  // ADC ration is below 1 means Rth is very high!
         }
     }
 
     // Thermistor on high side
     else
     {
-        if ( adc_ratio < 1.0f )
+        if ( adc_ratio > 1.0f )
         {
-            th_res = (float32_t) ( gp_cfg_table[th].hw.pull_down * ( adc_ratio - 1.0f ));
+            th_res = (float32_t)( gp_cfg_table[th].hw.pull_down * ( adc_ratio - 1.0f ));
         }
         else
         {
-            th_res = 0.0f;  // ADC ration is above 1 means Rth is 0 ohm!
+            th_res = 0.0f;  // ADC ration is below 1 means Rth is 0 ohm!
         }
     } 
     
