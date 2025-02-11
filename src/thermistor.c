@@ -275,7 +275,7 @@ static float32_t th_calc_ntc_temperature(const float32_t rth, const float32_t be
     float32_t temp = 0.0f;
 
     // Calculate temperature
-    temp = (float32_t) (( 1.0f / ( TH_NTC_25DEG_FACTOR + (( 1.0f / beta ) * log( rth / rth_nom )))) - 273.15f );
+    temp = (float32_t) (( 1.0f / ( TH_NTC_25DEG_FACTOR + (( 1.0f / beta ) * logf( rth / rth_nom )))) - 273.15f );
 
     return temp;
 }
