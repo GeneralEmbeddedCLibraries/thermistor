@@ -152,14 +152,10 @@ static inline float32_t th_limit_f32            (const float32_t in, const float
 ////////////////////////////////////////////////////////////////////////////////
 static float32_t th_calc_res_single_pull(const th_ch_t th)
 {
-    float32_t   th_res  = 0.0f;
-    uint16_t    adc_raw = 0U;
-
-    // Get raw adc value
-    adc_get_raw( gp_cfg_table[th].adc_ch, &adc_raw );
+    float32_t th_res = 0.0f;
 
     // Calculate ADC ratio
-    const float32_t adc_ratio = ((float32_t)((float32_t) adc_get_raw_max() / (float32_t) ( adc_raw + 1U ))); // +1 to prevent dividing by zero!
+    const float32_t adc_ratio = ((float32_t)((float32_t) adc_get_raw_max() / (float32_t) ( adc_get_raw( gp_cfg_table[th].adc_ch ) + 1U ))); // +1 to prevent dividing by zero!
 
     // Thermistor on low side
     if ( eTH_HW_LOW_SIDE == gp_cfg_table[th].hw.conn )
@@ -732,165 +728,89 @@ th_status_t th_hndl(void)
 /*!
 * @brief        Get RAW temperature in ADC codes
 *
-* @param[in]    th      - Thermistor option
-* @param[out]   p_raw   - RAW temperature
-* @return       status  - Status of operation
+* @param[in]    th      - Thermistor channel
+* @return       raw     - RAW temperature
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t th_get_raw(const th_ch_t th, uint16_t * const p_raw)
+uint32_t th_get_raw(const th_ch_t th)
 {
-    th_status_t status = eTH_OK;
-
     TH_ASSERT( true == gb_is_init );
-    TH_ASSERT( NULL != p_raw );
     TH_ASSERT( th < eTH_NUM_OF );
 
-    if  (   ( true == gb_is_init )
-        &&  ( NULL != p_raw )
-        &&  ( th < eTH_NUM_OF ))
-    {
-        // Get raw adc value
-        adc_get_raw( gp_cfg_table[th].adc_ch, p_raw );
-    }
-    else
-    {
-        status = eTH_ERROR;
-    }
-
-    return status;
+    return adc_get_raw( gp_cfg_table[th].adc_ch );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
-* @brief        Get temperature in deg C
+* @brief        Get temperature in degC
 *
-* @param[in]    th      - Thermistor option
-* @param[out]   p_temp  - Pointer to temperature
-* @return       status  - Status of operation
+* @param[in]    th   - Thermistor channel
+* @return       temp - Temperature in degC
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t th_get_degC(const th_ch_t th, float32_t * const p_temp)
+float32_t th_get_degC(const th_ch_t th)
 {
-    th_status_t status = eTH_OK;
-
     TH_ASSERT( true == gb_is_init );
-    TH_ASSERT( NULL != p_temp );
     TH_ASSERT( th < eTH_NUM_OF );
 
-    if  (   ( true == gb_is_init )
-        &&  ( NULL != p_temp )
-        &&  ( th < eTH_NUM_OF ))
-    {
-        *p_temp = g_th_data[th].temp;
-    }
-    else
-    {
-        status = eTH_ERROR;
-    }
-
-    return status;
+    return g_th_data[th].temp;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
-* @brief        Get temperature in deg F
+* @brief        Get temperature in degF
 *
-* @param[in]    th      - Thermistor option
-* @param[out]   p_temp  - Pointer to temperature
-* @return       status  - Status of operation
+* @param[in]    th   - Thermistor channel
+* @return       temp - Temperature in degF
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t th_get_degF(const th_ch_t th, float32_t * const p_temp)
+float32_t th_get_degF(const th_ch_t th)
 {
-    th_status_t status = eTH_OK;
-
     TH_ASSERT( true == gb_is_init );
-    TH_ASSERT( NULL != p_temp );
     TH_ASSERT( th < eTH_NUM_OF );
 
-    if  (   ( true == gb_is_init )
-        &&  ( NULL != p_temp )
-        &&  ( th < eTH_NUM_OF ))
-    {
-        // Conversion formula: T[°F] = 9/5[°F/°C] * T[°C] + 32[°F]
-        *p_temp = (float32_t)(( 1.8f * g_th_data[th].temp ) + 32.0f );
-    }
-    else
-    {
-        status = eTH_ERROR;
-    }
-
-    return status;
+    // Conversion formula: T[°F] = 9/5[°F/°C] * T[°C] + 32[°F]
+    return (float32_t)(( 1.8f * g_th_data[th].temp ) + 32.0f );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
 * @brief        Get temperature in kelvins
 *
-* @param[in]    th      - Thermistor option
-* @param[out]   p_temp  - Pointer to temperature
-* @return       status  - Status of operation
+* @param[in]    th   - Thermistor channel
+* return        temp - Temperature in K
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t th_get_kelvin(const th_ch_t th, float32_t * const p_temp)
+float32_t th_get_kelvin(const th_ch_t th)
 {
-    th_status_t status = eTH_OK;
-
     TH_ASSERT( true == gb_is_init );
-    TH_ASSERT( NULL != p_temp );
     TH_ASSERT( th < eTH_NUM_OF );
 
-    if  (   ( true == gb_is_init )
-        &&  ( NULL != p_temp )
-        &&  ( th < eTH_NUM_OF ))
-    {
-        // Conversion formula: T[K] = T[°C] + 273.15[K]
-        *p_temp = (float32_t)( g_th_data[th].temp + 273.15f );
-    }
-    else
-    {
-        status = eTH_ERROR;
-    }
-
-    return status;
+    // Conversion formula: T[K] = T[°C] + 273.15[K]
+    return (float32_t)( g_th_data[th].temp + 273.15f );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
 * @brief        Get resistance of thermistor in Ohms
 *
-* @param[in]    th      - Thermistor option
-* @param[out]   p_res   - Pointer to resistance
-* @return       status  - Status of operation
+* @param[in]    th  - Thermistor channel
+* @return       res - Resistance in Ohm
 */
 ////////////////////////////////////////////////////////////////////////////////
-th_status_t th_get_resistance(const th_ch_t th, float32_t * const p_res)
+float32_t th_get_resistance(const th_ch_t th)
 {
-    th_status_t status = eTH_OK;
-
     TH_ASSERT( true == gb_is_init );
-    TH_ASSERT( NULL != p_res );
     TH_ASSERT( th < eTH_NUM_OF );
 
-    if  (   ( true == gb_is_init )
-        &&  ( NULL != p_res )
-        &&  ( th < eTH_NUM_OF ))
-    {
-        *p_res = g_th_data[th].res;
-    }
-    else
-    {
-        status = eTH_ERROR;
-    }
-
-    return status;
+    return g_th_data[th].res;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /*!
 * @brief        Get thermistor status
 *
-* @param[in]    th      - Thermistor option
+* @param[in]    th      - Thermistor channel
 * @return       status  - Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
@@ -918,65 +838,31 @@ th_status_t th_get_status(const th_ch_t th)
 
     ////////////////////////////////////////////////////////////////////////////////
     /*!
-    * @brief        Get filtered temperature in deg C
+    * @brief        Get filtered temperature in degC
     *
-    * @param[in]    th      - Thermistor option
-    * @param[out]   p_temp  - Pointer to temperature
-    * @return       status  - Status of operation
+    * @param[in]    th   - Thermistor channel
+    * @return       temp - Filtered temperature in degC
     */
     ////////////////////////////////////////////////////////////////////////////////
-    th_status_t th_get_degC_filt(const th_ch_t th, float32_t * const p_temp)
+    float32_t th_get_degC_filt(const th_ch_t th)
     {
-        th_status_t status = eTH_OK;
-
         TH_ASSERT( true == gb_is_init );
-        TH_ASSERT( NULL != p_temp );
         TH_ASSERT( th < eTH_NUM_OF );
 
-        if  (   ( true == gb_is_init )
-            &&  ( NULL != p_temp )
-            &&  ( th < eTH_NUM_OF ))
-        {
-            *p_temp = g_th_data[th].temp_filt;
-        }
-        else
-        {
-            status = eTH_ERROR;
-        }
-
-        return status;
+        return g_th_data[th].temp_filt;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     /*!
-    * @brief        Get filtered temperature in deg F
+    * @brief        Get filtered temperature in degF
     *
-    * @param[in]    th      - Thermistor option
-    * @param[out]   p_temp  - Pointer to temperature
-    * @return       status  - Status of operation
+    * @param[in]    th   - Thermistor channel
+    * @return       temp - Filtered temperature in degF
     */
     ////////////////////////////////////////////////////////////////////////////////
-    th_status_t th_get_degF_filt(const th_ch_t th, float32_t * const p_temp)
+    float32_t th_get_degF_filt(const th_ch_t th)
     {
-        th_status_t status = eTH_OK;
-
-        TH_ASSERT( true == gb_is_init );
-        TH_ASSERT( NULL != p_temp );
-        TH_ASSERT( th < eTH_NUM_OF );
-
-        if  (   ( true == gb_is_init )
-            &&  ( NULL != p_temp )
-            &&  ( th < eTH_NUM_OF ))
-        {
-            // Conversion formula: T[°F] = 9/5[°F/°C] * T[°C] + 32[°F]
-            *p_temp = (float32_t)(( 1.8f * g_th_data[th].temp_filt ) + 32.0f );
-        }
-        else
-        {
-            status = eTH_ERROR;
-        }
-
-        return status;
+        return (float32_t)(( 1.8f * th_get_degC_filt(th)) + 32.0f );
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -984,38 +870,19 @@ th_status_t th_get_status(const th_ch_t th)
     * @brief        Get filtered temperature in kelvin
     *
     * @param[in]    th      - Thermistor option
-    * @param[out]   p_temp  - Pointer to temperature
-    * @return       status  - Status of operation
+    * @return       temp - Filtered temperature in K
     */
     ////////////////////////////////////////////////////////////////////////////////
-    th_status_t th_get_kelvin_filt(const th_ch_t th, float32_t * const p_temp)
+    float32_t th_get_kelvin_filt(const th_ch_t th)
     {
-        th_status_t status = eTH_OK;
-
-        TH_ASSERT( true == gb_is_init );
-        TH_ASSERT( NULL != p_temp );
-        TH_ASSERT( th < eTH_NUM_OF );
-
-        if  (   ( true == gb_is_init )
-            &&  ( NULL != p_temp )
-            &&  ( th < eTH_NUM_OF ))
-        {
-            // Conversion formula: T[K] = T[°C] + 273.15[K]
-            *p_temp = (float32_t)( g_th_data[th].temp_filt + 273.15f );
-        }
-        else
-        {
-            status = eTH_ERROR;
-        }
-
-        return status;
+        return (float32_t)( th_get_degC_filt(th) + 273.15f );
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     /*!
     * @brief        Set LPF cuttoff frequency
     *
-    * @param[in]    th      - Thermistor option
+    * @param[in]    th      - Thermistor channel
     * @param[in]    fc      - Cutoff frequency of LPF
     * @return       status  - Status of operation
     */
@@ -1049,38 +916,27 @@ th_status_t th_get_status(const th_ch_t th)
     /*!
     * @brief        Get LPF cuttoff frequency
     *
-    * @param[in]    th      - Thermistor option
-    * @param[out]   p_fc    - Pointer to LPF cutoff frequency
-    * @return       status  - Status of operation
+    * @param[in]    th - Thermistor channel
+    * @return       fc - Thermistor LPF cutoff frequency
     */
     ////////////////////////////////////////////////////////////////////////////////
-    th_status_t th_get_lpf_fc(const th_ch_t th, float32_t * const p_fc)
+    float32_t th_get_lpf_fc(const th_ch_t th)
     {
-        th_status_t status = eTH_OK;
+        float32_t fc = 0;
 
         TH_ASSERT( true == gb_is_init );
-        TH_ASSERT( NULL != p_fc );
         TH_ASSERT( th < eTH_NUM_OF );
 
-        if  (   ( true == gb_is_init )
-            &&  ( NULL != p_fc )
-            &&  ( th < eTH_NUM_OF ))
-        {
-            (void) filter_rc_fc_get( g_th_data[th].lpf, p_fc );
-        }
-        else
-        {
-            status = eTH_ERROR;
-        }
+        (void) filter_rc_fc_get( g_th_data[th].lpf, &fc );
 
-        return status;
+        return fc;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     /*!
     * @brief        Reset LPF filter
     *
-    * @param[in]    th      - Thermistor option
+    * @param[in]    th      - Thermistor channel
     * @param[in]    temp    - Temperature value to reset to
     * @return       status  - Status of operation
     */

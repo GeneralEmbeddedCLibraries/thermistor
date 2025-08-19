@@ -61,19 +61,19 @@ th_status_t th_deinit           (void);
 th_status_t th_is_init          (bool * const p_is_init);
 th_status_t th_hndl             (void);
 
-th_status_t th_get_raw          (const th_ch_t th, uint16_t * const p_raw);
-th_status_t th_get_degC         (const th_ch_t th, float32_t * const p_temp);
-th_status_t th_get_degF         (const th_ch_t th, float32_t * const p_temp);
-th_status_t th_get_kelvin       (const th_ch_t th, float32_t * const p_temp);
-th_status_t th_get_resistance   (const th_ch_t th, float32_t * const p_res);
+uint32_t    th_get_raw          (const th_ch_t th);
+float32_t   th_get_degC         (const th_ch_t th);
+float32_t   th_get_degF         (const th_ch_t th);
+float32_t   th_get_kelvin       (const th_ch_t th);
+float32_t   th_get_resistance   (const th_ch_t th);
 th_status_t th_get_status       (const th_ch_t th);
 
 #if ( 1 == TH_FILTER_EN )
-    th_status_t th_get_degC_filt    (const th_ch_t th, float32_t * const p_temp);
-    th_status_t th_get_degF_filt    (const th_ch_t th, float32_t * const p_temp);
-    th_status_t th_get_kelvin_filt  (const th_ch_t th, float32_t * const p_temp);
+    float32_t   th_get_degC_filt    (const th_ch_t th);
+    float32_t   th_get_degF_filt    (const th_ch_t th);
+    float32_t   th_get_kelvin_filt  (const th_ch_t th);
     th_status_t th_set_lpf_fc       (const th_ch_t th, const float32_t fc);
-    th_status_t th_get_lpf_fc       (const th_ch_t th, float32_t * const p_fc);
+    float32_t   th_get_lpf_fc       (const th_ch_t th);
     th_status_t th_reset_lpf        (const th_ch_t th, const float32_t temp);
 #endif
 
