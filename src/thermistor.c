@@ -97,7 +97,8 @@ typedef struct
     float32_t temp_filt;  /**<Filtered temperature values in degC */
 
     #if ( 1 == TH_FILTER_EN )
-        filter_rc_t lpf;   /**<Low pass filter */
+        filter_rc_t lpf;        /**<Low pass filter */
+        float32_t   lpf_mem;    /**<Low pass filter memory */
     #endif
 
     th_status_t status;    /**<Thermistor status */
@@ -399,6 +400,9 @@ static th_status_t th_init_filter(const th_ch_t th)
     th_status_t status = eTH_OK;
 
     #if ( 1 == TH_FILTER_EN )
+
+        // Setup filter memory
+        g_th_data[th].lpf.p_y = &g_th_data[th].lpf_mem;
 
         // Init LPF 
         if ( eFILTER_OK != filter_rc_init_static( &g_th_data[th].lpf, gp_cfg_table[th].lpf_fc, TH_HNDL_FREQ_HZ, 1, g_th_data[th].temp ))
@@ -899,7 +903,7 @@ th_status_t th_get_status(const th_ch_t th)
             &&  ( th < eTH_NUM_OF )
             &&  ( fc > 0.0f ))
         {
-            if ( eFILTER_OK != filter_rc_fc_set( &g_th_data[th].lpf, fc ))
+            if ( eFILTER_OK != filter_rc_set_fc( &g_th_data[th].lpf, fc ))
             {
                 status = eTH_ERROR;
             }
@@ -925,7 +929,7 @@ th_status_t th_get_status(const th_ch_t th)
         TH_ASSERT( true == gb_is_init );
         TH_ASSERT( th < eTH_NUM_OF );
 
-        return filter_rc_fc_get( &g_th_data[th].lpf );
+        return filter_rc_get_fc( &g_th_data[th].lpf );
     }
 
     ////////////////////////////////////////////////////////////////////////////////
