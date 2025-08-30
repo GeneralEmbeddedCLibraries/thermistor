@@ -34,9 +34,9 @@
     /**
      *  Compatibility check with Filter module
      *
-     *  Support version V2.x.x
+     *  Support version V3.x.x
      */
-    _Static_assert( 2 == FILTER_VER_MAJOR );
+    _Static_assert( 3 == FILTER_VER_MAJOR );
 
 #endif
 
@@ -97,7 +97,7 @@ typedef struct
     float32_t temp_filt;  /**<Filtered temperature values in degC */
 
     #if ( 1 == TH_FILTER_EN )
-        p_filter_rc_t lpf;   /**<Low pass filter */
+        filter_rc_t lpf;   /**<Low pass filter */
     #endif
 
     th_status_t status;    /**<Thermistor status */
@@ -401,7 +401,7 @@ static th_status_t th_init_filter(const th_ch_t th)
     #if ( 1 == TH_FILTER_EN )
 
         // Init LPF 
-        if ( eFILTER_OK != filter_rc_init( &g_th_data[th].lpf, gp_cfg_table[th].lpf_fc, TH_HNDL_FREQ_HZ, 1, g_th_data[th].temp ))
+        if ( eFILTER_OK != filter_rc_init_static( &g_th_data[th].lpf, gp_cfg_table[th].lpf_fc, TH_HNDL_FREQ_HZ, 1, g_th_data[th].temp ))
         {
             status = eTH_ERROR;
         }
@@ -707,7 +707,7 @@ th_status_t th_hndl(void)
 
             // Update filter
             #if ( 1 == TH_FILTER_EN )
-                 (void) filter_rc_hndl( g_th_data[th].lpf, g_th_data[th].temp, &g_th_data[th].temp_filt );
+                g_th_data[th].temp_filt = filter_rc_hndl( &g_th_data[th].lpf, g_th_data[th].temp );
             #else
                 g_th_data[th].temp_filt = g_th_data[th].temp;
             #endif
@@ -899,7 +899,7 @@ th_status_t th_get_status(const th_ch_t th)
             &&  ( th < eTH_NUM_OF )
             &&  ( fc > 0.0f ))
         {
-            if ( eFILTER_OK != filter_rc_fc_set( g_th_data[th].lpf, fc ))
+            if ( eFILTER_OK != filter_rc_fc_set( &g_th_data[th].lpf, fc ))
             {
                 status = eTH_ERROR;
             }
@@ -922,14 +922,10 @@ th_status_t th_get_status(const th_ch_t th)
     ////////////////////////////////////////////////////////////////////////////////
     float32_t th_get_lpf_fc(const th_ch_t th)
     {
-        float32_t fc = 0;
-
         TH_ASSERT( true == gb_is_init );
         TH_ASSERT( th < eTH_NUM_OF );
 
-        (void) filter_rc_fc_get( g_th_data[th].lpf, &fc );
-
-        return fc;
+        return filter_rc_fc_get( &g_th_data[th].lpf );
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -951,7 +947,7 @@ th_status_t th_get_status(const th_ch_t th)
         if  (   ( true == gb_is_init )
             &&  ( th < eTH_NUM_OF ))
         {
-            (void) filter_rc_reset( g_th_data[th].lpf, temp );
+            (void) filter_rc_reset( &g_th_data[th].lpf, temp );
         }
         else
         {
